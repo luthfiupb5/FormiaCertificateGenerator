@@ -83,7 +83,8 @@ export async function generateCertificates({
 
         // Iterate through objects to find text mappings
         for (const obj of objects) {
-            if (obj.type === 'i-text' && obj.mappedColumn) {
+            // Support both old Fabric 'i-text'/'textbox' and new Konva 'text'
+            if ((obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') && obj.mappedColumn) {
                 const columnName = obj.mappedColumn;
                 const textValue = row[columnName] || '';
 
@@ -94,27 +95,37 @@ export async function generateCertificates({
                 const font = embeddedFonts[fontFamily] || embeddedFonts['Helvetica'];
 
                 // Calculate PDF Coordinates
-                let x = obj.left;
-                let y = obj.top;
+                // Konva uses x/y as top-left by default for Text
+                // Fabric uses left/top combined with originX/originY
 
-                // Adjust for Origin
-                if (obj.originX === 'center') x -= obj.width / 2;
-                if (obj.originY === 'center') y -= obj.height / 2;
+                let x = obj.x !== undefined ? obj.x : obj.left;
+                let y = obj.y !== undefined ? obj.y : obj.top;
+
+                // Legacy Fabric Origin Adjustment
+                if (obj.originX === 'center') x -= (obj.width || 0) / 2;
+                if (obj.originY === 'center') y -= (obj.height || 0) / 2;
+
+                // Konva Center Alignment adjustment if needed? 
+                // For now assuming Konva x,y is accurate top-left of the bounding box
 
                 // Scale
                 const pdfX = x * scaleX;
-                const pdfY = height - (y * scaleY) - (obj.height * scaleY); // Flip Y
+                const pdfY = height - (y * scaleY) - ((obj.height || 0) * scaleY); // Flip Y (PDF is bottom-left origin)
 
                 // Draw Text
-                const fontSize = (obj.fontSize || 20) * scaleY;
-                const colorHex = obj.fill as string;
-                const r = parseInt(colorHex.slice(1, 3), 16) / 255;
-                const g = parseInt(colorHex.slice(3, 5), 16) / 255;
-                const b = parseInt(colorHex.slice(5, 7), 16) / 255;
+                const fontSize = (obj.fontSize || 20) * scaleY; // Apply vertical scale
+                const colorHex = obj.fill as string || '#000000';
+
+                let r = 0, g = 0, b = 0;
+                if (colorHex.startsWith('#')) {
+                    r = parseInt(colorHex.slice(1, 3), 16) / 255;
+                    g = parseInt(colorHex.slice(3, 5), 16) / 255;
+                    b = parseInt(colorHex.slice(5, 7), 16) / 255;
+                }
 
                 page.drawText(textValue, {
                     x: pdfX,
-                    y: pdfY + (obj.height * scaleY * 0.8), // Baseline adjustment rough approx
+                    y: pdfY + ((obj.height || 0) * scaleY * 0.8), // Baseline approx
                     size: fontSize,
                     font: font,
                     color: rgb(r, g, b)

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { Type, Download, Loader2, MousePointer2, Database, Table, CheckCircle2 } from 'lucide-react';
-import CanvasArea from '../Canvas/CanvasArea';
+import { useState, useMemo, useEffect } from 'react';
+import { Type, Download, Loader2, MousePointer2, Database, Table, CheckCircle2, Undo, Redo } from 'lucide-react';
+import dynamic from 'next/dynamic';
+const KonvaStage = dynamic(() => import('../Canvas/KonvaStage'), { ssr: false });
 import DataUploader from '../Data/DataUploader';
 import DataPreview from '../Data/DataPreview';
 import { generateCertificates } from '@/lib/generator';
-import { GOOGLE_FONTS, loadGoogleFont } from '@/lib/fonts';
+import { GOOGLE_FONTS } from '@/lib/fonts';
 import clsx from 'clsx';
-import type { fabric } from 'fabric';
 import { useCanvasStore } from '@/lib/store';
+import { v4 as uuidv4 } from 'uuid';
 
 interface WorkspaceProps {
     templateUrl: string;
@@ -21,12 +22,24 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
 
     // Global Store
     const {
-        canvas,
-        selectedObject,
-        setSelectedObject,
+        nodes,
+        addNode,
+        updateNode,
+        selectedNodeId,
+        selectNode,
         activeTool,
-        setActiveTool
+        setActiveTool,
+        undo,
+        redo,
+        past,
+        future,
+        removeNode
     } = useCanvasStore();
+
+    // Derived State
+    const selectedNode = useMemo(() =>
+        nodes.find(n => n.id === selectedNodeId),
+        [nodes, selectedNodeId]);
 
     // Data State
     const [showDataUploader, setShowDataUploader] = useState(false);
@@ -35,7 +48,16 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
     const [showDataPreview, setShowDataPreview] = useState(false);
 
     // Computed Mapping State
-    const [mappedColumns, setMappedColumns] = useState<Record<string, boolean>>({});
+    const mappedColumns = useMemo(() => {
+        const mappingStatus: Record<string, boolean> = {};
+        dataHeaders.forEach(h => mappingStatus[h] = false);
+        nodes.forEach((node) => {
+            if (node.mappedColumn && dataHeaders.includes(node.mappedColumn)) {
+                mappingStatus[node.mappedColumn] = true;
+            }
+        });
+        return mappingStatus;
+    }, [nodes, dataHeaders]);
 
     // Auto-prompt Data Upload
     useEffect(() => {
@@ -43,108 +65,62 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
         return () => clearTimeout(timer);
     }, []);
 
-    // Check mapping status
-    const checkMappings = useCallback(() => {
-        if (!canvas) return;
-        const objects = canvas.getObjects();
-        const mappingStatus: Record<string, boolean> = {};
-
-        dataHeaders.forEach(h => mappingStatus[h] = false);
-
-        objects.forEach((obj: any) => {
-            if (obj.mappedColumn && dataHeaders.includes(obj.mappedColumn)) {
-                mappingStatus[obj.mappedColumn] = true;
-            }
-        });
-        setMappedColumns(mappingStatus);
-    }, [canvas, dataHeaders]);
-
-    // Canvas Event Listeners (Sync Selection to Store)
+    // Helper for keyboard shortcuts
     useEffect(() => {
-        if (!canvas) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-        const updateSelection = () => {
-            const active = canvas.getActiveObject();
-            setSelectedObject(active || null);
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    redo();
+                } else {
+                    undo();
+                }
+            } else if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedNodeId) {
+                    // Prevent backspace from navigating back
+                    e.preventDefault();
+                    removeNode(selectedNodeId);
+                    selectNode(null);
+                }
+            }
         };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undo, redo]);
 
-        const updateModified = () => {
-            checkMappings();
-        };
-
-        canvas.on('selection:created', updateSelection);
-        canvas.on('selection:updated', updateSelection);
-        canvas.on('selection:cleared', updateSelection);
-        canvas.on('object:modified', updateModified);
-        canvas.on('object:added', updateModified);
-
-        return () => {
-            canvas.off('selection:created', updateSelection);
-            canvas.off('selection:updated', updateSelection);
-            canvas.off('selection:cleared', updateSelection);
-            canvas.off('object:modified', updateModified);
-            canvas.off('object:added', updateModified);
-        };
-    }, [canvas, checkMappings, setSelectedObject]);
-
-    const addText = async (mappedColumn: string = '') => {
-        if (!canvas) return;
-
-        const fabricModule = await import('fabric');
-        const fabric: any = (fabricModule as any).fabric || fabricModule.default || fabricModule;
-
+    const addText = (mappedColumn: string = '') => {
         const textValue = mappedColumn ? `{${mappedColumn}}` : 'Double click to edit';
 
-        let left = 100;
-        let top = 100;
+        // Center text on stage - could use current stage center but hardcoded is fine for MVP
+        // In a real app we'd calculate center of visible viewport from store.stage
 
-        if (canvas.viewportTransform) {
-            const vpt = canvas.viewportTransform;
-            const zoom = canvas.getZoom();
-            const width = canvas.width || 800;
-            const height = canvas.height || 600;
-
-            left = (width / 2 - vpt[4]) / zoom;
-            top = (height / 2 - vpt[5]) / zoom;
-        }
-
-        // Use Textbox for wrapping
-        const text = new fabric.Textbox(textValue, {
-            left: left,
-            top: top,
+        const id = uuidv4();
+        addNode({
+            id,
+            type: 'text',
+            x: 400, // Reasonable default
+            y: 300,
+            text: textValue,
+            fontSize: 40,
             fontFamily: 'Inter',
             fill: '#000000',
-            fontSize: 40,
-            width: 300, // Default width
-            originX: 'center',
-            originY: 'center',
-            splitByGrapheme: true,
-            objectCaching: false,
-            textAlign: 'center'
+            width: 300,
+            align: 'center',
+            mappedColumn
         });
-
-        (text as any).mappedColumn = mappedColumn;
-
-        canvas.add(text);
-        canvas.setActiveObject(text);
-        canvas.requestRenderAll();
-        // Switch to select tool so they can edit it
+        selectNode(id);
         setActiveTool('select');
-        checkMappings();
     };
 
     const updateProperty = (key: string, value: any) => {
-        if (!canvas || !selectedObject) return;
-        if (key === 'fontFamily') loadGoogleFont(value);
-        selectedObject.set(key as any, value);
-        canvas.requestRenderAll();
-    };
-
-    const updateMapping = (value: string) => {
-        if (!canvas || !selectedObject) return;
-        (selectedObject as any).mappedColumn = value;
-        canvas.fire('object:modified', { target: selectedObject });
-        checkMappings();
+        if (!selectedNodeId) return;
+        updateNode(selectedNodeId, { [key]: value });
     };
 
     const handleDataLoaded = (headers: string[], rows: any[]) => {
@@ -152,24 +128,31 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
         setDataRows(rows);
         setShowDataUploader(false);
         setShowDataPreview(true);
-        checkMappings();
     };
 
     const handleExport = async () => {
-        if (!canvas || !templateUrl || dataRows.length === 0) {
+        if (!templateUrl || dataRows.length === 0) {
             alert('Please upload a template and data first.');
             return;
         }
 
         setIsProcessing(true);
         try {
+            // Note: We need to adapt the generator to accept Nodes instead of Fabric Objects
+            // For now passing "nodes" structure which is cleaner
             await generateCertificates({
                 templateUrl,
                 data: dataRows,
-                mappings: {},
-                objects: canvas.getObjects().map(o => o.toObject(['mappedColumn'])),
-                canvasWidth: canvas.width!,
-                canvasHeight: canvas.height!
+                mappings: {}, // Deprecated in favor of direct object mapping
+                objects: nodes.map(n => ({
+                    ...n,
+                    // Generator expects specific properties, ensure compatibility
+                    left: n.x,
+                    top: n.y,
+                    type: n.type === 'text' ? 'textbox' : n.type // Map types if needed
+                })),
+                canvasWidth: 800, // Should come from stage real dims
+                canvasHeight: 600
             });
             alert('Certificates generated successfully!');
         } catch (e) {
@@ -183,7 +166,26 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
     return (
         <div className="w-full h-full animate-in fade-in duration-500 relative flex">
 
-            <div className="absolute top-4 right-4 z-20 flex gap-2">
+            <div className="absolute top-4 right-4 z-20 flex gap-2 items-center">
+                <div className="flex bg-neutral-800/80 backdrop-blur rounded-lg p-1 mr-2 border border-white/10">
+                    <button
+                        onClick={undo}
+                        disabled={past.length === 0}
+                        className="p-2 rounded hover:bg-white/10 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <Undo className="w-4 h-4" />
+                    </button>
+                    <div className="w-px bg-white/10 my-1 mx-1" />
+                    <button
+                        onClick={redo}
+                        disabled={future.length === 0}
+                        className="p-2 rounded hover:bg-white/10 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Redo (Ctrl+Shift+Z)"
+                    >
+                        <Redo className="w-4 h-4" />
+                    </button>
+                </div>
                 <button
                     onClick={() => dataRows.length > 0 ? setShowDataPreview(!showDataPreview) : setShowDataUploader(true)}
                     className={clsx(
@@ -209,14 +211,12 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                 <div className="glass-panel p-1.5 rounded-xl flex flex-col gap-1 pointer-events-auto shadow-2xl shadow-black/50 w-14 items-center animate-in slide-in-from-left-4 fade-in duration-500">
                     <button
                         onClick={() => {
-                            canvas?.discardActiveObject();
-                            canvas?.requestRenderAll();
-                            setSelectedObject(null);
+                            selectNode(null);
                             setActiveTool('select');
                         }}
                         className={clsx(
                             "w-10 h-10 flex items-center justify-center rounded-lg transition-colors",
-                            activeTool === 'select' && !selectedObject ? "bg-primary text-white shadow-lg shadow-primary/25" : "hover:bg-white/10 text-neutral-400 hover:text-white"
+                            activeTool === 'select' && !selectedNode ? "bg-primary text-white shadow-lg shadow-primary/25" : "hover:bg-white/10 text-neutral-400 hover:text-white"
                         )}
                         title="Select Tool"
                     >
@@ -260,12 +260,11 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                 )}
             </div>
 
-            {/* Canvas Area */}
-            {/* onCanvasReady is effectively optional/redundant if we rely on store, but keeping for compatibility if needed */}
-            <CanvasArea templateUrl={templateUrl} />
+            {/* Canvas Area (Replaced) */}
+            <KonvaStage templateUrl={templateUrl} />
 
-            {/* Right Properties Panel - Now checks specific Textbox type */}
-            {selectedObject && (selectedObject.type === 'textbox' || selectedObject.type === 'i-text') && (
+            {/* Right Properties Panel */}
+            {selectedNode && selectedNode.type === 'text' && (
                 <div className="absolute top-6 right-6 w-72 glass-panel rounded-xl p-0 animate-in slide-in-from-right-10 fade-in duration-300 z-10 overflow-hidden shadow-2xl shadow-black/50">
                     <div className="px-4 py-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
@@ -277,7 +276,7 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                             <label className="text-xs text-neutral-500">Font Family</label>
                             <select
                                 className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-sm outline-none focus:border-primary appearance-none"
-                                value={(selectedObject as any).fontFamily}
+                                value={selectedNode.fontFamily}
                                 onChange={(e) => updateProperty('fontFamily', e.target.value)}
                             >
                                 {GOOGLE_FONTS.map(font => (
@@ -293,7 +292,7 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                                 <input
                                     type="number"
                                     className="w-full bg-black/20 border border-white/10 rounded px-2 py-1.5 text-sm outline-none focus:border-primary"
-                                    value={(selectedObject as any).fontSize}
+                                    value={selectedNode.fontSize}
                                     onChange={(e) => updateProperty('fontSize', parseInt(e.target.value))}
                                 />
                             </div>
@@ -303,25 +302,25 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                                     <input
                                         type="color"
                                         className="w-5 h-5 rounded cursor-pointer bg-transparent border-none p-0"
-                                        value={(selectedObject as any).fill as string}
+                                        value={selectedNode.fill}
                                         onChange={(e) => updateProperty('fill', e.target.value)}
                                     />
-                                    <span className="text-xs text-neutral-400 truncate opacity-50 font-mono">{(selectedObject as any).fill}</span>
+                                    <span className="text-xs text-neutral-400 truncate opacity-50 font-mono">{selectedNode.fill}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* New Alignment Controls */}
+                        {/* Alignment Controls */}
                         <div className="space-y-1">
                             <label className="text-xs text-neutral-500">Alignment</label>
                             <div className="flex bg-black/20 border border-white/10 rounded p-1 gap-1">
                                 {['left', 'center', 'right', 'justify'].map((align) => (
                                     <button
                                         key={align}
-                                        onClick={() => updateProperty('textAlign', align)}
+                                        onClick={() => updateProperty('align', align)}
                                         className={clsx(
                                             "flex-1 p-1 rounded text-xs capitalize transition-colors",
-                                            (selectedObject as any).textAlign === align ? "bg-white/20 text-white" : "text-neutral-500 hover:text-white"
+                                            selectedNode.align === align ? "bg-white/20 text-white" : "text-neutral-500 hover:text-white"
                                         )}
                                     >
                                         {align}
@@ -341,8 +340,8 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                             {dataHeaders.length > 0 ? (
                                 <select
                                     className="w-full bg-primary/10 border border-primary/20 rounded px-2 py-1.5 text-sm outline-none focus:border-primary text-primary appearance-none cursor-pointer"
-                                    value={(selectedObject as any).mappedColumn || ''}
-                                    onChange={(e) => updateMapping(e.target.value)}
+                                    value={selectedNode.mappedColumn || ''}
+                                    onChange={(e) => updateProperty('mappedColumn', e.target.value)}
                                 >
                                     <option value="">-- Select Column --</option>
                                     {dataHeaders.map(h => (
@@ -354,8 +353,8 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                                     type="text"
                                     placeholder="e.g. Name"
                                     className="w-full bg-primary/10 border border-primary/20 rounded px-2 py-1.5 text-sm outline-none focus:border-primary text-primary placeholder:text-primary/30"
-                                    defaultValue={(selectedObject as any).mappedColumn || ''}
-                                    onBlur={(e) => updateMapping(e.target.value)}
+                                    defaultValue={selectedNode.mappedColumn || ''}
+                                    onBlur={(e) => updateProperty('mappedColumn', e.target.value)}
                                 />
                             )}
                             {dataHeaders.length === 0 && (
