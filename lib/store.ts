@@ -47,8 +47,8 @@ interface CanvasState {
     setStage: (stage: { scale: number; x: number; y: number }) => void;
 
     // Tools
-    activeTool: 'select' | 'hand';
-    setActiveTool: (tool: 'select' | 'hand') => void;
+    activeTool: 'select' | 'hand' | 'text';
+    setActiveTool: (tool: 'select' | 'hand' | 'text') => void;
     isPanning: boolean;
     setIsPanning: (isPanning: boolean) => void;
 

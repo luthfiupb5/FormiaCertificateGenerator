@@ -40,6 +40,8 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [editingNode, setEditingNode] = React.useState<string | null>(null);
     const [textInputStyle, setTextInputStyle] = React.useState<any>({});
+    const [isDrawing, setIsDrawing] = React.useState(false);
+    const [startPos, setStartPos] = React.useState<{ x: number; y: number } | null>(null);
 
     const {
         nodes,
@@ -190,8 +192,116 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
         setEditingNode(node.id);
     };
 
+    // Drop Handler
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        stage.setPointersPositions(e);
+        const pointer = stage.getPointerPosition();
+        if (!pointer) return;
+
+        // Convert to stage coords
+        const x = (pointer.x - stage.x()) / stage.scaleX();
+        const y = (pointer.y - stage.y()) / stage.scaleY();
+
+        const content = e.dataTransfer.getData('text/plain');
+        if (content) {
+            // Check if content is a valid column mapping
+            const mappedColumn = content.startsWith('{') && content.endsWith('}')
+                ? content.slice(1, -1)
+                : undefined;
+
+            addNode({
+                id: uuidv4(),
+                type: 'text',
+                x,
+                y,
+                text: content,
+                fontSize: 40,
+                fontFamily: 'Inter',
+                fill: '#000000',
+                width: 300,
+                align: 'center',
+                mappedColumn
+            });
+            // Select new node
+            // Note: We can't easily get the ID here synchronous from addNode unless we generated it first.
+            // Which we did (uuidv4). But let's skip auto-selection for Drop for now or refactor.
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault(); // Essential to allow drop
+    };
+
+    // Draw Tool Handlers
+    const handleMouseDown = (e: any) => {
+        if (activeTool !== 'text') {
+            // Standard selection logic
+            // Deselect if clicked start on empty stage
+            if (e.target === e.target.getStage()) {
+                selectNode(null);
+            }
+            return;
+        }
+
+        // Start Drawing
+        const stage = stageRef.current;
+        const pointer = stage.getRelativePointerPosition();
+        setIsDrawing(true);
+        setStartPos(pointer);
+        selectNode(null); // Deselect others
+    };
+
+    const handleMouseMove = () => {
+        if (!isDrawing || activeTool !== 'text' || !startPos) return;
+        // Visual feedback could be added here (e.g. temporary rect)
+        // For now we just wait for mouse up
+    };
+
+    const handleMouseUp = () => {
+        if (!isDrawing || activeTool !== 'text' || !startPos) return;
+
+        const stage = stageRef.current;
+        const pointer = stage.getRelativePointerPosition();
+
+        const width = Math.abs(pointer.x - startPos.x);
+        // Minimum width threshold
+        if (width > 10) {
+            const id = uuidv4();
+            addNode({
+                id,
+                type: 'text',
+                x: startPos.x,
+                y: startPos.y,
+                text: 'Double click to edit',
+                fontSize: 40,
+                fontFamily: 'Inter',
+                fill: '#000000',
+                width: width, // Use drawn width
+                align: 'left',
+            });
+            selectNode(id);
+            setActiveTool('select'); // Switch back to select
+            setEditingNode(id); // Auto-enter edit mode? Optional but nice.
+        }
+
+        setIsDrawing(false);
+        setStartPos(null);
+    };
+
     return (
-        <div ref={containerRef} className="w-full h-full bg-neutral-900 overflow-hidden relative">
+        <div
+            ref={containerRef}
+            className={clsx(
+                "w-full h-full bg-neutral-900 overflow-hidden relative",
+                activeTool === 'text' && "cursor-crosshair"
+            )}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+        >
             <Stage
                 ref={stageRef}
                 width={containerRef.current?.offsetWidth || 800}
@@ -203,12 +313,9 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                 y={stage.y}
                 draggable={activeTool === 'hand'} // Only drag stage if Hand tool
                 onDragEnd={handleStageDragEnd}
-                onMouseDown={(e) => {
-                    // Deselect if clicked start on empty stage
-                    if (e.target === e.target.getStage()) {
-                        selectNode(null);
-                    }
-                }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
             >
                 <Layer>
                     {nodes.map((node) => {
@@ -263,13 +370,28 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                                     opacity={isEditing ? 0 : 1} // Hide node while editing
                                     // Transformations
                                     onDragEnd={(e) => handleNodeChange(node.id, e)}
+                                    onTransform={(e) => {
+                                        const node = e.target;
+                                        // Compute new width based on scale
+                                        // We only allow width resizing, so we effectively "consume" the scale into width
+                                        const scaleX = node.scaleX();
+
+                                        // Reset scale to 1 and update width
+                                        node.scaleX(1);
+                                        node.scaleY(1);
+                                        node.width(Math.max(node.width() * scaleX, 30));
+                                    }}
                                     onTransformEnd={(e) => {
-                                        // Special handling for Text resize vs scale
-                                        // Konva Transformer scales by default. 
-                                        // To support "width" resize, we need to reset scale and update width.
-                                        // But for now let's just stick to scale for simplicity, or we can use the "width" trick.
-                                        // Let's settle for scale first to strictly follow "Transform" logic requested.
-                                        handleNodeChange(node.id, e);
+                                        const node = e.target;
+                                        // Sync final state to store
+                                        updateNode(node.id(), {
+                                            x: node.x(),
+                                            y: node.y(),
+                                            rotation: node.rotation(),
+                                            scaleX: 1, // Always 1 for text now
+                                            scaleY: 1,
+                                            width: node.width(),
+                                        });
                                     }}
                                 />
                             );
@@ -279,6 +401,9 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
 
                     <Transformer
                         ref={transformerRef}
+                        // For text nodes, we might want to restrict anchors if we solely want width resizing
+                        // But enabling all anchors with the logic above allows "corner drag" to just resize width too, 
+                        // which is acceptable "Text Box" behavior.
                         boundBoxFunc={(oldBox, newBox) => {
                             if (newBox.width < 5 || newBox.height < 5) return oldBox;
                             return newBox;
@@ -313,7 +438,7 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                         transform: textInputStyle.transform,
                         transformOrigin: 'top left',
                         background: 'transparent',
-                        border: '1px solid #6366f1',
+                        border: '1px solid #5e61f9ff',
                         outline: 'none',
                         resize: 'none',
                         overflow: 'hidden',

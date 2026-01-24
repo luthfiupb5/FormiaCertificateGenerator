@@ -30,33 +30,37 @@ export async function loadCustomFont(name: string, url: string) {
     document.fonts.add(font);
 }
 
-export async function getGoogleFontUrl(fontFamily: string): Promise<string> {
-    // This is a simplified way to get the font URL. 
-    try {
-        const cssUrl = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:wght@400;700&display=swap`;
-        const res = await fetch(cssUrl);
-        const css = await res.text();
+// Hardcoded reliable static TTF URLs to prevent Variable Font issues with pdf-lib
+const FONT_URLS: Record<string, string> = {
+    'Inter': 'https://github.com/google/fonts/raw/main/ofl/inter/static/Inter-Regular.ttf',
+    'Roboto': 'https://github.com/google/fonts/raw/main/ofl/roboto/static/Roboto-Regular.ttf',
+    'Open Sans': 'https://github.com/google/fonts/raw/main/ofl/opensans/static/OpenSans-Regular.ttf',
+    'Montserrat': 'https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-Regular.ttf',
+    'Poppins': 'https://github.com/google/fonts/raw/main/ofl/poppins/Poppins-Regular.ttf', // Poppins is usually static at root
+    'Playfair Display': 'https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Regular.ttf',
+    'Lato': 'https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf',
+    'Merriweather': 'https://github.com/google/fonts/raw/main/ofl/merriweather/Merriweather-Regular.ttf',
+    'Oswald': 'https://github.com/google/fonts/raw/main/ofl/oswald/static/Oswald-Regular.ttf',
+    'Raleway': 'https://github.com/google/fonts/raw/main/ofl/raleway/static/Raleway-Regular.ttf'
+};
 
-        // Regex to extract the first woff2 url
-        const match = css.match(/src:\s*url\((.*?)\)/);
-        if (match && match[1]) {
-            return match[1];
-        }
-    } catch (e) {
-        console.error('Failed to resolve font URL', e);
-    }
-    return '';
+export async function getGoogleFontUrl(fontFamily: string): Promise<string> {
+    return FONT_URLS[fontFamily] || '';
 }
 
 export async function fetchFontBuffer(fontFamily: string): Promise<ArrayBuffer | null> {
     try {
-        const url = await getGoogleFontUrl(fontFamily);
-        if (!url) return null;
+        const url = FONT_URLS[fontFamily];
+        if (!url) {
+            console.warn(`No hardcoded URL for ${fontFamily}`);
+            return null;
+        }
 
         const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to fetch font: ${res.statusText}`);
         return await res.arrayBuffer();
     } catch (e) {
-        console.warn(`Could not fetch font buffer for ${fontFamily}, falling back to standard font.`);
+        console.warn(`Could not fetch font buffer for ${fontFamily}, falling back to standard font.`, e);
         return null;
     }
 }

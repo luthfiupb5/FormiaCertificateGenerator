@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function SignUp() {
+export default function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -13,12 +13,12 @@ export default function SignUp() {
     const router = useRouter();
     const supabase = createClient();
 
-    const handleSignUp = async (e: React.FormEvent) => {
+    const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        const { error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -27,8 +27,6 @@ export default function SignUp() {
             setError(error.message);
             setLoading(false);
         } else {
-            // For email confirmation flows, usually check for session or show "Check email" message.
-            // Assuming auto-confirm or session created for now, or redirect to dashboard (will be guarded by middleware/auth state)
             router.push('/dashboard');
         }
     };
@@ -36,7 +34,7 @@ export default function SignUp() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-black text-white p-4">
             <div className="w-full max-w-md p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <h2 className="text-3xl font-serif font-bold text-center mb-8">Create Account</h2>
+                <h2 className="text-3xl font-serif font-bold text-center mb-8">Welcome Back</h2>
 
                 {error && (
                     <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-200 text-sm rounded-lg">
@@ -44,7 +42,7 @@ export default function SignUp() {
                     </div>
                 )}
 
-                <form onSubmit={handleSignUp} className="space-y-6">
+                <form onSubmit={handleSignIn} className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-neutral-400 mb-2">Email</label>
                         <input
@@ -64,7 +62,6 @@ export default function SignUp() {
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-primary focus:outline-none transition-colors"
                             required
-                            minLength={6}
                         />
                     </div>
 
@@ -73,7 +70,7 @@ export default function SignUp() {
                         disabled={loading}
                         className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed hidden"
                     >
-                        {loading ? 'Sign Up...' : 'Sign Up'}
+                        {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                     {/* Hiding default button for now or keeping it? The user specifically asked for Google. Let's keep both. */}
                     <button
@@ -81,7 +78,7 @@ export default function SignUp() {
                         disabled={loading}
                         className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Sign Up...' : 'Sign Up'}
+                        {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>
 
@@ -123,13 +120,13 @@ export default function SignUp() {
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                         />
                     </svg>
-                    Sign up with Google
+                    Sign in with Google
                 </button>
 
                 <p className="mt-6 text-center text-sm text-neutral-500">
-                    Already have an account?{' '}
-                    <Link href="/auth/signin" className="text-primary hover:text-primary-hover">
-                        Sign In
+                    Don't have an account?{' '}
+                    <Link href="/auth/signup" className="text-primary hover:text-primary-hover">
+                        Sign Up
                     </Link>
                 </p>
             </div>

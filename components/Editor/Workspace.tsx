@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Type, Download, Loader2, MousePointer2, Database, Table, CheckCircle2, Undo, Redo } from 'lucide-react';
+import { Type, Download, Loader2, MousePointer2, Database, Table, CheckCircle2, Undo, Redo, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const KonvaStage = dynamic(() => import('../Canvas/KonvaStage'), { ssr: false });
 import DataUploader from '../Data/DataUploader';
@@ -149,15 +149,15 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                     // Generator expects specific properties, ensure compatibility
                     left: n.x,
                     top: n.y,
-                    type: n.type === 'text' ? 'textbox' : n.type // Map types if needed
+                    type: n.type // Pass type as is ('text')
                 })),
                 canvasWidth: 800, // Should come from stage real dims
                 canvasHeight: 600
             });
             alert('Certificates generated successfully!');
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert('Failed to generate certificates.');
+            alert(`Failed to generate certificates: ${e.message}`);
         } finally {
             setIsProcessing(false);
         }
@@ -184,6 +184,20 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                         title="Redo (Ctrl+Shift+Z)"
                     >
                         <Redo className="w-4 h-4" />
+                    </button>
+                    <div className="w-px bg-white/10 my-1 mx-1" />
+                    <button
+                        onClick={() => {
+                            if (selectedNodeId) {
+                                removeNode(selectedNodeId);
+                                selectNode(null);
+                            }
+                        }}
+                        disabled={!selectedNodeId}
+                        className="p-2 rounded hover:bg-red-500/10 text-neutral-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Delete (Del/Backspace)"
+                    >
+                        <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
                 <button
@@ -223,9 +237,15 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                         <MousePointer2 className="w-5 h-5" />
                     </button>
                     <button
-                        onClick={() => addText()}
-                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-                        title="Add Text"
+                        onClick={() => {
+                            selectNode(null);
+                            setActiveTool(activeTool === 'text' ? 'select' : 'text');
+                        }}
+                        className={clsx(
+                            "w-10 h-10 flex items-center justify-center rounded-lg transition-colors",
+                            activeTool === 'text' ? "bg-primary text-white shadow-lg shadow-primary/25" : "hover:bg-white/10 text-neutral-400 hover:text-white"
+                        )}
+                        title="Draw Text Tool (Click & Drag)"
                     >
                         <Type className="w-5 h-5" />
                     </button>
@@ -242,17 +262,22 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
                             {dataHeaders.map(header => (
                                 <button
                                     key={header}
+                                    draggable
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData('text/plain', `{${header}}`);
+                                        e.dataTransfer.effectAllowed = 'copy';
+                                    }}
                                     onClick={() => addText(header)}
                                     className={clsx(
-                                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between group",
+                                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between group cursor-grab active:cursor-grabbing",
                                         mappedColumns[header]
                                             ? "bg-green-500/10 text-green-400 border border-green-500/20"
                                             : "hover:bg-white/10 text-neutral-300 border border-transparent"
                                     )}
                                 >
-                                    <span className="truncate">{header}</span>
-                                    {mappedColumns[header] && <CheckCircle2 className="w-3 h-3 text-green-500" />}
-                                    {!mappedColumns[header] && <span className="opacity-0 group-hover:opacity-100 text-[10px] text-neutral-500">+ Add</span>}
+                                    <span className="truncate pointer-events-none">{header}</span>
+                                    {mappedColumns[header] && <CheckCircle2 className="w-3 h-3 text-green-500 pointer-events-none" />}
+                                    {!mappedColumns[header] && <span className="opacity-0 group-hover:opacity-100 text-[10px] text-neutral-500 pointer-events-none">+ Add</span>}
                                 </button>
                             ))}
                         </div>
