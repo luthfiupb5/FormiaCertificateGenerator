@@ -93,7 +93,7 @@ export default function DashboardPage() {
                 {/* Welcome Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-in slide-in-from-bottom-4 fade-in duration-700">
                     <div>
-                        <h1 className="text-4xl font-bold font-serif mb-2 bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
+                        <h1 className="text-4xl font-bold font-heading mb-2 bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
                             Recent Masterpieces
                         </h1>
                         <p className="text-neutral-400">Continue where you left off or start a new creation.</p>
@@ -129,16 +129,21 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             /* Empty State */
-                            <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-16 text-center max-w-2xl mx-auto mt-10 animate-in zoom-in-95 duration-500">
-                                <div className="w-20 h-20 bg-gradient-to-tr from-neutral-800 to-neutral-900 rounded-2xl rotate-3 mx-auto mb-8 flex items-center justify-center shadow-2xl">
-                                    <Layout className="w-10 h-10 text-neutral-600" />
+                            <div className="group relative bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 rounded-3xl p-16 text-center max-w-2xl mx-auto mt-10 animate-in zoom-in-95 duration-500 hover:shadow-[0_0_60px_rgba(139,92,246,0.15)] hover:border-violet-500/30 transition-all duration-500 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+
+                                <div className="w-24 h-24 bg-gradient-to-tr from-[#1a1a1a] to-[#0a0a0a] rounded-2xl rotate-3 mx-auto mb-8 flex items-center justify-center shadow-2xl ring-1 ring-white/5 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-[0_0_30px_rgba(139,92,246,0.2)] transition-all duration-500 relative z-10">
+                                    <div className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity border border-white/10"></div>
+                                    <Layout className="w-10 h-10 text-neutral-500 group-hover:text-violet-400 transition-colors" />
                                 </div>
-                                <h3 className="text-2xl font-bold mb-3 text-white">No projects found</h3>
-                                <p className="text-neutral-400 mb-8 max-w-md mx-auto leading-relaxed">
+
+                                <h3 className="text-3xl font-bold font-heading mb-4 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-violet-200 transition-all">No projects found</h3>
+                                <p className="text-neutral-400 mb-10 max-w-md mx-auto leading-relaxed text-sm">
                                     Your dashboard is looking a bit empty. Create your first certificate design to populate this space.
                                 </p>
-                                <Link href="/canvas">
-                                    <button className="btn btn-primary px-8">
+
+                                <Link href="/canvas" className="relative z-10 inline-block">
+                                    <button className="px-8 py-3 rounded-full bg-white text-black font-bold text-sm hover:scale-105 hover:bg-violet-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]">
                                         Start Creating
                                     </button>
                                 </Link>

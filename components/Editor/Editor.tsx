@@ -50,61 +50,62 @@ export default function Editor() {
 
     return (
         <div className="flex h-screen w-full flex-col bg-background text-foreground overflow-hidden font-sans">
-            {/* Header */}
-            <header className="h-16 border-b border-border bg-surface/50 backdrop-blur flex items-center px-6 justify-between z-20 sticky top-0">
-                <div className="flex items-center gap-3">
-                    <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/20">
+            {/* Floating Glass Header */}
+            <header className="absolute top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl h-14 rounded-full border border-white/5 bg-[#050505]/80 backdrop-blur-xl flex items-center px-2 justify-between z-50 shadow-2xl shadow-black/50 overflow-hidden ring-1 ring-white/5">
+                <div className="flex items-center gap-3 pl-2">
+                    <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white font-bold font-heading text-xs shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform">
                             F
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight">Formia</h1>
+                        <h1 className="text-sm font-bold font-heading tracking-tight text-white/90">Formia</h1>
                     </Link>
+
+                    <div className="h-4 w-px bg-white/10 mx-1" />
+
                     {originalFileName && (
-                        <span className="hidden md:flex ml-4 text-xs font-mono text-neutral-400 bg-surface/50 border border-border px-3 py-1 rounded-full items-center gap-2">
+                        <span className="hidden md:flex text-[10px] font-bold tracking-widest uppercase text-neutral-500 bg-white/5 border border-white/5 px-3 py-1 rounded-full items-center gap-2">
                             {originalFileName}
                         </span>
                     )}
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 pr-2">
                     {/* User Profile */}
                     {user ? (
-                        <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+                        <div className="flex items-center gap-3 pl-4 border-l border-white/5">
                             <div className="flex flex-col items-end">
-                                <span className="text-sm font-medium">{user.name}</span>
-                                <button
-                                    onClick={handleSignOut}
-                                    className="text-[10px] text-neutral-400 hover:text-red-400 transition-colors"
-                                >
-                                    Sign Out
-                                </button>
+                                <span className="text-xs font-medium text-white/80">{user.name}</span>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white text-xs font-bold border border-white/10 shadow-lg shadow-primary/20">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-500 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold border border-white/10 shadow-lg shadow-violet-500/20">
                                 {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                             </div>
+                            <button
+                                onClick={handleSignOut}
+                                className="text-[10px] text-neutral-500 hover:text-red-400 transition-colors px-2"
+                            >
+                                SigOut
+                            </button>
                         </div>
                     ) : (
-                        <Link href="/auth/login" className="btn btn-secondary text-xs h-8 px-4">
+                        <Link href="/auth/login" className="px-5 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-neutral-200 transition-colors">
                             Sign In
                         </Link>
                     )}
 
                     {templateUrl && (
-                        <div className="h-6 w-px bg-white/10 mx-1" />
-                    )}
-
-                    {templateUrl && (
                         <button
                             onClick={handleReset}
-                            className="btn btn-secondary text-sm gap-2 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50"
+                            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500/20 text-neutral-500 hover:text-red-500 transition-colors"
+                            title="Reset Project"
                         >
-                            <RefreshCcw className="w-4 h-4" /> <span className="hidden sm:inline">Reset</span>
+                            <RefreshCcw className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             </header>
 
-            <main className="flex-1 relative flex overflow-hidden bg-dot-pattern">
+            <main className="flex-1 relative flex overflow-hidden bg-[#050505]">
+                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
                 {templateUrl ? (
                     <Workspace
                         key={templateUrl} // Force re-mount if url changes

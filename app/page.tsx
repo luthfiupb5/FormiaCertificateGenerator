@@ -1,18 +1,11 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard, CheckCircle2, Zap, Layers, Globe } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
-
 export default function LandingPage() {
-  const container = useRef(null);
-  const heroRef = useRef(null);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -24,211 +17,242 @@ export default function LandingPage() {
     checkUser();
   }, []);
 
-  useGSAP(() => {
-    // 1. Hero Text Stagger
-    const tl = gsap.timeline();
-    tl.from('.hero-word', {
-      y: 120,
-      opacity: 0,
-      duration: 1.4,
-      stagger: 0.15,
-      ease: 'power4.out',
-    })
-      .from('.hero-sub', {
-        y: 30,
-        opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
-      }, '-=0.8')
-      .from('.hero-btn', {
-        scale: 0.9,
-        y: 20,
-        opacity: 0,
-        duration: 1,
-        ease: 'elastic.out(1, 0.75)',
-      }, '-=0.6');
-
-    // ... rest of animations
-    // 2. Scroll Reveals
-    gsap.utils.toArray('.reveal-section').forEach((section: any) => {
-      gsap.from(section, {
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 85%',
-          toggleActions: 'play none none reverse',
-        },
-        y: 80,
-        opacity: 0,
-        duration: 1.2,
-        ease: 'power3.out',
-      });
-    });
-
-    // 3. Floating Graphics
-    gsap.to('.float-shape', {
-      y: -25,
-      rotation: 5,
-      duration: 4,
-      yoyo: true,
-      repeat: -1,
-      ease: 'sine.inOut',
-      stagger: 1.5,
-    });
-
-    // 4. "Certificates" Premium Animation
-    gsap.fromTo('.anim-char',
-      {
-        y: 50,
-        opacity: 0,
-        rotateX: -90,
-      },
-      {
-        y: 0,
-        opacity: 1,
-        rotateX: 0,
-        stagger: 0.04,
-        duration: 1.2,
-        ease: 'expo.out',
-        delay: 0.3
-      }
-    );
-
-    // Subtle breathing motion for the text
-    gsap.to('.anim-char', {
-      y: -3,
-      duration: 2.5,
-      yoyo: true,
-      repeat: -1,
-      ease: 'sine.inOut',
-      stagger: {
-        each: 0.05,
-        from: 'center'
-      }
-    });
-
-  }, { scope: container });
-
-  // Helper to split text
-  const renderAnimatedText = (text: string) => {
-    return text.split('').map((char, i) => (
-      <span key={i} className="anim-char inline-block" style={{ transformOrigin: 'bottom center', backfaceVisibility: 'hidden' }}>
-        {char}
-      </span>
-    ));
-  };
-
   return (
-    <main ref={container} className="min-h-screen bg-black text-white selection:bg-purple-500/30 overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center backdrop-blur-md bg-black/40 border-b border-white/5 transition-all duration-300">
-        <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2 relative group">
-          <div className="w-6 h-6 bg-white rounded-md group-hover:rotate-12 transition-transform duration-300"></div>
-          Formia
-        </Link>
-        <div className="flex gap-4">
-          <Link href="/auth/signin" className={user ? "hidden" : "btn btn-outline text-sm px-6 py-2 rounded-full border-white/10 hover:bg-white hover:text-black transition-all"}>Log In</Link>
-          {user ? (
-            <Link href="/dashboard" className="btn btn-primary text-sm px-6 py-2 rounded-full flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </Link>
-          ) : (
-            <Link href="/auth/signup" className="btn btn-primary text-sm px-6 py-2 rounded-full hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-shadow">Sign Up Free</Link>
-          )}
+    <main className="min-h-screen bg-[#050505] text-white selection:bg-violet-500/30 overflow-x-hidden font-sans">
+
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-violet-900/20 via-transparent to-transparent blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-blue-900/10 blur-[100px] rounded-full"></div>
+      </div>
+
+      {/* Floating Navbar */}
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-50 transition-all duration-300">
+        <div className="px-6 py-3 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex justify-between items-center shadow-2xl shadow-black/50">
+          <Link href="/" className="text-lg font-bold tracking-tight flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white text-xs shadow-lg shadow-violet-500/20 font-heading">F</div>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 font-heading">Formia</span>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">
+            <Link href="#features" className="hover:text-white transition-colors">Features</Link>
+            <Link href="#" className="hover:text-white transition-colors">Solutions</Link>
+            <Link href="#" className="hover:text-white transition-colors">Pricing</Link>
+          </div>
+
+          <div className="flex gap-4 items-center">
+            <Link href="/auth/signin" className={user ? "hidden" : "text-sm font-medium text-neutral-400 hover:text-white transition-colors"}>Log In</Link>
+            {user ? (
+              <Link href="/dashboard" className="px-5 py-2 rounded-full bg-white text-black text-sm font-medium hover:bg-neutral-200 transition-colors flex items-center gap-2">
+                Dashboard <ArrowRight className="w-3 h-3" />
+              </Link>
+            ) : (
+              <Link href="/auth/signup" className="group relative px-6 py-2 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-medium overflow-hidden transition-all hover:shadow-[0_0_20px_rgba(124,58,237,0.5)]">
+                <span className="relative z-10">Get Started</span>
+                <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 ease-out -skew-x-12 -translate-x-full"></div>
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20">
+      <section className="relative pt-40 pb-20 md:pt-52 md:pb-32 px-4 flex flex-col items-center text-center z-10">
 
-        {/* Decorative Shapes */}
-        <div className="float-shape absolute top-32 left-[10%] w-32 h-32 rounded-full border border-purple-500/20 blur-xl opacity-50"></div>
-        <div className="float-shape absolute bottom-32 right-[10%] w-64 h-64 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 rounded-full blur-3xl"></div>
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-violet-300 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-100 backdrop-blur-sm">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+          </span>
+          <span className="tracking-wide uppercase text-[10px]">New Release 2.0</span>
+        </div>
 
-        {/* Glow behind text */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+        {/* Main Title */}
+        <h1 className="max-w-4xl mx-auto text-6xl md:text-8xl font-bold font-heading tracking-tighter leading-[1.05] mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-neutral-500">Design Certificates.</span>
+          <br />
+          <span className="bg-clip-text text-transparent bg-[linear-gradient(to_right,#fff,theme(colors.violet.400),theme(colors.blue.400),#fff)] bg-[length:200%_auto] animate-shimmer">
+            At Scale.
+          </span>
+        </h1>
 
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter leading-[0.9] mb-10 perspective-1000">
-            <span className="hero-word inline-block">Design</span>{' '}
-            <span className="hero-word inline-block font-serif italic text-[#8b5cf6] pr-2 relative">
-              {/* Underline svg or decorative element could go here */}
-              {renderAnimatedText('Certificates.')}
-            </span> <br />
-            <span className="hero-word inline-block">At Scale.</span>
-          </h1>
+        <p className="max-w-xl mx-auto text-lg text-neutral-400 leading-relaxed mb-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+          Design beautiful certificates, map your data, and generate thousands of PDFs in seconds. The ultimate tool for bulk creativity.
+        </p>
 
-          <p className="hero-sub text-xl md:text-2xl text-neutral-400 max-w-2xl mx-auto mb-14 font-light leading-relaxed tracking-wide">
-            The canvas for bulk creation. Map data, drag & drop, and generate thousands of PDFs in seconds.
-          </p>
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-5 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-400">
+          <Link href="/auth/signup">
+            <button className="relative px-8 py-4 rounded-xl bg-[#0A0A0A] border border-white/10 text-white font-medium overflow-hidden group hover:border-violet-500/50 transition-colors shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <span className="relative flex items-center gap-2">
+                Start Building Free <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+          </Link>
+          <Link href="#features">
+            <button className="px-8 py-4 rounded-xl hover:bg-white/5 text-neutral-400 hover:text-white transition-colors font-medium">
+              Documentation
+            </button>
+          </Link>
+        </div>
 
-          <div className="hero-btn flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Link href={user ? "/dashboard" : "/auth/signup"}>
-              <button className="btn btn-primary text-lg !px-10 !py-5 rounded-full shadow-[0_0_50px_-15px_rgba(139,92,246,0.5)] hover:shadow-[0_0_80px_-20px_rgba(139,92,246,0.6)] hover:scale-105 transition-all duration-300">
-                {user ? 'Go to Dashboard' : 'Get Started for Free'}
-              </button>
-            </Link>
-            <Link href="#features">
-              <button className="btn btn-outline text-lg !px-10 !py-5 rounded-full border-white/10 hover:bg-white/5 hover:border-white/30 backdrop-blur-sm transition-all duration-300">
-                See How It Works
-              </button>
-            </Link>
+        {/* Hero Visual / Glow */}
+        <div className="mt-20 relative w-full max-w-5xl mx-auto aspect-[16/9] bg-gradient-to-br from-white/5 to-white/0 rounded-2xl border border-white/10 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-1000 delay-500 backdrop-blur-sm group">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-violet-500/10 via-transparent to-transparent"></div>
+
+          {/* Abstract UI Representation */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#0A0A0A] rounded-xl border border-white/10 flex flex-col shadow-2xl group-hover:scale-[1.02] transition-transform duration-700 ease-out">
+            {/* Window Header */}
+            <div className="h-10 border-b border-white/5 flex items-center px-4 gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500/20"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500/20"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500/20"></div>
+            </div>
+            {/* Content */}
+            <div className="flex-1 p-8 flex gap-8">
+              <div className="w-1/4 h-full space-y-3">
+                <div className="h-8 w-full bg-white/5 rounded-md animate-pulse"></div>
+                <div className="h-4 w-2/3 bg-white/5 rounded-md"></div>
+                <div className="h-4 w-1/2 bg-white/5 rounded-md"></div>
+              </div>
+              <div className="flex-1 h-full bg-grid-white/[0.02] rounded-lg border border-white/5 relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs uppercase tracking-widest font-mono">
+                  Canvas Preview
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trusted By Carousel */}
+        <div className="mt-24 w-full">
+          <p className="text-sm font-medium text-neutral-500 mb-8 uppercase tracking-widest">Trusted by 200+ companies</p>
+
+          <div className="relative w-full overflow-hidden group">
+            {/* Gradient Masks (Feather) */}
+            <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none"></div>
+
+            <div className="flex gap-20 animate-marquee whitespace-nowrap hover:[animation-play-state:paused] w-max">
+              {/* Triple the logos for smoother seamless loop on wide screens */}
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex gap-20 items-center">
+                  {['FeatherDev', 'Boltshift', 'GlobalBank', 'Lightbox', 'Spherule', 'Nietzsche'].map((name) => (
+                    <span key={`${i}-${name}`} className="text-xl font-bold font-sans tracking-tight text-neutral-600 hover:text-white transition-colors cursor-default flex items-center gap-3">
+                      <div className="w-6 h-6 rounded bg-neutral-800 flex-shrink-0"></div>
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section id="features" className="py-32 px-6 max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: <PenTool className="w-8 h-8 text-purple-400" />,
-              title: "Freeform Canvas",
-              desc: "Drag, drop, and design without constraints. Feels just like your favorite design tool."
-            },
-            {
-              icon: <Shapes className="w-8 h-8 text-blue-400" />,
-              title: "Smart Variables",
-              desc: "Connect your Excel data. Columns become draggable variables on your canvas."
-            },
-            {
-              icon: <Download className="w-8 h-8 text-green-400" />,
-              title: "Instant Export",
-              desc: "Generate zip files containing thousands of personalized PDFs in one click."
-            }
-          ].map((feature, i) => (
-            <div key={i} className="reveal-section p-10 rounded-3xl bg-neutral-900/50 border border-white/5 hover:bg-neutral-900 hover:border-white/10 transition-colors group">
-              <div className="mb-6 p-4 bg-white/5 rounded-2xl w-fit group-hover:scale-110 transition-transform duration-300">{feature.icon}</div>
-              <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-              <p className="text-neutral-400 text-lg leading-relaxed">{feature.desc}</p>
+
+      {/* Features "Bento Grid" section */}
+      <section id="features" className="py-32 px-4 relative z-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-20 text-center">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-neutral-500">Everything you need.</h2>
+            <p className="text-neutral-400 max-w-xl mx-auto">Powerful features wrapped in a stunning interface. Built for speed, designed for scale.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Large Item */}
+            <div className="md:col-span-2 p-8 md:p-12 rounded-3xl bg-white/[0.03] border border-white/10 hover:border-violet-500/30 transition-colors group relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-10 opacity-20">
+                <div className="w-64 h-64 bg-violet-600 rounded-full blur-[100px]"></div>
+              </div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center mb-6 text-violet-400">
+                  <Layers className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Unlimited Layers</h3>
+                <p className="text-neutral-400 leading-relaxed max-w-md">Stack text, images, and shapes with full control. Group, lock, and organize your certificate elements just like in high-end design software.</p>
+              </div>
             </div>
-          ))}
+
+            {/* Tall Item */}
+            <div className="md:row-span-2 p-8 md:p-12 rounded-3xl bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-colors group relative overflow-hidden flex flex-col">
+              <div className="absolute bottom-0 left-0 p-10 opacity-20">
+                <div className="w-64 h-64 bg-blue-600 rounded-full blur-[100px]"></div>
+              </div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-6 text-blue-400">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Instant Generate</h3>
+                <p className="text-neutral-400 leading-relaxed mb-8">Process thousands of records in seconds. Our optimized engine handles the heavy lifting.</p>
+
+                {/* Visual representation */}
+                <div className="mt-auto w-full h-40 bg-black/40 rounded-xl border border-white/5 relative overflow-hidden">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-shimmer"></div>
+                  <div className="p-4 space-y-2">
+                    <div className="h-2 w-3/4 bg-white/10 rounded-full"></div>
+                    <div className="h-2 w-1/2 bg-white/10 rounded-full"></div>
+                    <div className="h-2 w-5/6 bg-white/10 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Small Item 1 */}
+            <div className="p-8 rounded-3xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-colors">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4 text-emerald-400">
+                <Globe className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Cloud Synced</h3>
+              <p className="text-sm text-neutral-400">Access your designs from anywhere. Always safe.</p>
+            </div>
+
+            {/* Small Item 2 */}
+            <div className="p-8 rounded-3xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-colors">
+              <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center mb-4 text-pink-400">
+                <Download className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Export Anywhere</h3>
+              <p className="text-sm text-neutral-400">PDF, PNG, or JPG. High resolution print-ready files.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Big Visual Section */}
-      <section className="reveal-section py-20 px-6">
-        <div className="max-w-6xl mx-auto bg-gradient-to-b from-neutral-900 to-black rounded-[3rem] border border-white/10 p-12 md:p-24 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent opacity-50"></div>
+      {/* CTA Layer */}
+      <section className="py-20 px-4 relative z-10">
+        <div className="max-w-4xl mx-auto rounded-[3rem] p-1 bg-gradient-to-r from-violet-500/50 via-blue-500/50 to-violet-500/50">
+          <div className="bg-[#050505] rounded-[calc(3rem-4px)] px-6 py-20 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/20 blur-[100px] rounded-full"></div>
 
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-8">Ready to recognize brilliance?</h2>
-            <Link href="/auth/signup">
-              <button className="btn btn-primary text-xl px-10 py-5">
-                Start Creating Free <ArrowRight className="ml-2 w-6 h-6" />
-              </button>
-            </Link>
+            <div className="relative z-10">
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-8">Ready to start?</h2>
+              <Link href="/auth/signup">
+                <button className="px-10 py-4 rounded-full bg-white text-black font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                  Get Started Now
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-white/5 text-center text-neutral-500">
-        <div className="flex justify-center items-center gap-2 mb-4 opacity-50">
-          <div className="w-4 h-4 bg-white rounded-full"></div>
-          <span className="font-bold tracking-tight text-white">Formia</span>
+      <footer className="border-t border-white/5 bg-black py-12 px-6 relative z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600"></div>
+            <span className="font-bold tracking-tight">Formia</span>
+          </div>
+          <div className="text-sm text-neutral-500">
+            &copy; 2024 Formia Inc. Design by Antigravity.
+          </div>
         </div>
-        <p>&copy; 2024 Formia Inc.</p>
       </footer>
+
     </main>
   );
 }

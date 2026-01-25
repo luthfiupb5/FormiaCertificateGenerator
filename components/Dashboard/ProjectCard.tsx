@@ -33,7 +33,7 @@ const formatDate = (dateString: string) => {
 
 export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
     return (
-        <div className="group relative bg-[#111] border border-white/5 rounded-2xl overflow-hidden hover:border-white/20 transition-all duration-300 hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1">
+        <div className="group relative bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/30 transition-all duration-500 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] hover:-translate-y-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
             {/* Thumbnail Area */}
             <Link href={`/canvas?id=${project.id}`} className="block aspect-[4/3] bg-neutral-900 relative overflow-hidden">
                 {project.thumbnail_url ? (
