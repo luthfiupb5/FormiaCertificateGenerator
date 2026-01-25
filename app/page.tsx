@@ -1,93 +1,107 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, Shapes, PenTool, Download } from 'lucide-react';
+import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 export default function LandingPage() {
   const container = useRef(null);
   const heroRef = useRef(null);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
+  }, []);
 
   useGSAP(() => {
     // 1. Hero Text Stagger
     const tl = gsap.timeline();
     tl.from('.hero-word', {
-      y: 100,
+      y: 120,
       opacity: 0,
-      duration: 1.2,
-      stagger: 0.1,
+      duration: 1.4,
+      stagger: 0.15,
       ease: 'power4.out',
     })
       .from('.hero-sub', {
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out',
+      }, '-=0.8')
+      .from('.hero-btn', {
+        scale: 0.9,
         y: 20,
         opacity: 0,
-        duration: 0.8,
-        ease: 'power2.out',
-      }, '-=0.5')
-      .from('.hero-btn', {
-        scale: 0.8,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'elastic.out(1, 0.6)',
-      }, '-=0.4');
+        duration: 1,
+        ease: 'elastic.out(1, 0.75)',
+      }, '-=0.6');
 
+    // ... rest of animations
     // 2. Scroll Reveals
     gsap.utils.toArray('.reveal-section').forEach((section: any) => {
       gsap.from(section, {
         scrollTrigger: {
           trigger: section,
-          start: 'top 80%',
+          start: 'top 85%',
           toggleActions: 'play none none reverse',
         },
-        y: 60,
+        y: 80,
         opacity: 0,
-        duration: 1,
+        duration: 1.2,
         ease: 'power3.out',
       });
     });
 
     // 3. Floating Graphics
     gsap.to('.float-shape', {
-      y: -20,
-      rotation: 10,
-      duration: 3,
+      y: -25,
+      rotation: 5,
+      duration: 4,
       yoyo: true,
       repeat: -1,
       ease: 'sine.inOut',
-      stagger: 1,
+      stagger: 1.5,
     });
 
     // 4. "Certificates" Premium Animation
-    // Minimal, clean slide-up reveal
     gsap.fromTo('.anim-char',
       {
-        y: 40,
+        y: 50,
         opacity: 0,
+        rotateX: -90,
       },
       {
         y: 0,
         opacity: 1,
-        stagger: 0.03, // Tighter stagger for a cohesive word reveal
-        duration: 1,
-        ease: 'power3.out', // Smooth, no bounce
-        delay: 0.2
+        rotateX: 0,
+        stagger: 0.04,
+        duration: 1.2,
+        ease: 'expo.out',
+        delay: 0.3
       }
     );
 
     // Subtle breathing motion for the text
     gsap.to('.anim-char', {
-      y: -5,
-      duration: 3,
+      y: -3,
+      duration: 2.5,
       yoyo: true,
       repeat: -1,
       ease: 'sine.inOut',
       stagger: {
-        each: 0.1,
+        each: 0.05,
         from: 'center'
       }
     });
@@ -97,55 +111,64 @@ export default function LandingPage() {
   // Helper to split text
   const renderAnimatedText = (text: string) => {
     return text.split('').map((char, i) => (
-      <span key={i} className="anim-char inline-block" style={{ transformOrigin: 'bottom center' }}>
+      <span key={i} className="anim-char inline-block" style={{ transformOrigin: 'bottom center', backfaceVisibility: 'hidden' }}>
         {char}
       </span>
     ));
   };
 
   return (
-    <main ref={container} className="min-h-screen bg-black text-white selection:bg-purple-500/30">
+    <main ref={container} className="min-h-screen bg-black text-white selection:bg-purple-500/30 overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center backdrop-blur-sm bg-black/50 border-b border-white/5">
-        <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2">
-          <div className="w-6 h-6 bg-white rounded-full"></div>
+      <nav className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center backdrop-blur-md bg-black/40 border-b border-white/5 transition-all duration-300">
+        <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2 relative group">
+          <div className="w-6 h-6 bg-white rounded-md group-hover:rotate-12 transition-transform duration-300"></div>
           Formia
         </Link>
         <div className="flex gap-4">
-          <Link href="/auth/signin" className="btn btn-outline text-sm px-5 py-2">Log In</Link>
-          <Link href="/auth/signup" className="btn btn-primary text-sm px-5 py-2">Sign Up Free</Link>
+          <Link href="/auth/signin" className={user ? "hidden" : "btn btn-outline text-sm px-6 py-2 rounded-full border-white/10 hover:bg-white hover:text-black transition-all"}>Log In</Link>
+          {user ? (
+            <Link href="/dashboard" className="btn btn-primary text-sm px-6 py-2 rounded-full flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
+            </Link>
+          ) : (
+            <Link href="/auth/signup" className="btn btn-primary text-sm px-6 py-2 rounded-full hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-shadow">Sign Up Free</Link>
+          )}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden pt-20">
+      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20">
 
         {/* Decorative Shapes */}
-        <div className="float-shape absolute top-32 left-[10%] w-32 h-32 rounded-full border border-purple-500/30 blur-sm"></div>
-        <div className="float-shape absolute bottom-32 right-[10%] w-48 h-48 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-xl rotate-12 blur-md"></div>
-        <div className="float-shape absolute top-40 right-[20%] w-16 h-16 bg-white/10 rounded-full"></div>
+        <div className="float-shape absolute top-32 left-[10%] w-32 h-32 rounded-full border border-purple-500/20 blur-xl opacity-50"></div>
+        <div className="float-shape absolute bottom-32 right-[10%] w-64 h-64 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 rounded-full blur-3xl"></div>
+
+        {/* Glow behind text */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="relative z-10 max-w-5xl mx-auto">
-          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter leading-[0.9] mb-8">
+          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter leading-[0.9] mb-10 perspective-1000">
             <span className="hero-word inline-block">Design</span>{' '}
-            <span className="hero-word inline-block font-serif italic text-[#8b5cf6] pr-2">
+            <span className="hero-word inline-block font-serif italic text-[#8b5cf6] pr-2 relative">
+              {/* Underline svg or decorative element could go here */}
               {renderAnimatedText('Certificates.')}
             </span> <br />
             <span className="hero-word inline-block">At Scale.</span>
           </h1>
 
-          <p className="hero-sub text-xl md:text-2xl text-neutral-400 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+          <p className="hero-sub text-xl md:text-2xl text-neutral-400 max-w-2xl mx-auto mb-14 font-light leading-relaxed tracking-wide">
             The canvas for bulk creation. Map data, drag & drop, and generate thousands of PDFs in seconds.
           </p>
 
-          <div className="hero-btn flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/dashboard">
-              <button className="btn btn-primary text-lg !px-8 !py-4 shadow-[0_0_40px_-10px_rgba(120,119,255,0.5)]">
-                Get Started for Free
+          <div className="hero-btn flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <Link href={user ? "/dashboard" : "/auth/signup"}>
+              <button className="btn btn-primary text-lg !px-10 !py-5 rounded-full shadow-[0_0_50px_-15px_rgba(139,92,246,0.5)] hover:shadow-[0_0_80px_-20px_rgba(139,92,246,0.6)] hover:scale-105 transition-all duration-300">
+                {user ? 'Go to Dashboard' : 'Get Started for Free'}
               </button>
             </Link>
             <Link href="#features">
-              <button className="btn btn-outline text-lg !px-8 !py-4">
+              <button className="btn btn-outline text-lg !px-10 !py-5 rounded-full border-white/10 hover:bg-white/5 hover:border-white/30 backdrop-blur-sm transition-all duration-300">
                 See How It Works
               </button>
             </Link>

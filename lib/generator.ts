@@ -13,6 +13,8 @@ interface GenerationConfig {
     objects: any[]; // Fabric objects to get coordinates
     canvasWidth: number;
     canvasHeight: number;
+    exportFormat?: 'pdf' | 'jpg';
+    exportStructure?: 'individual' | 'merged';
 }
 
 
@@ -23,6 +25,8 @@ export async function generateCertificates({
     objects,
     canvasWidth,
     canvasHeight,
+    exportFormat = 'pdf',
+    exportStructure = 'individual'
 }: GenerationConfig) {
     const zip = new JSZip();
 
@@ -62,92 +66,76 @@ export async function generateCertificates({
         }
     }
 
+    // --- NEW LOGIC START ---
+
+    let mergedPdfDoc: PDFDocument | null = null;
+    if (exportFormat === 'pdf' && exportStructure === 'merged') {
+        mergedPdfDoc = await PDFDocument.create();
+        mergedPdfDoc.registerFontkit(fontkit);
+    }
+
     // We'll iterate through each data row
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
 
-        if (isPdf) {
-            pdfDoc = await PDFDocument.load(templateBytes);
-        } else {
-            // Create new PDF for Image Template
-            pdfDoc = await PDFDocument.create();
+        // For individual mode, we create a fresh doc each time.
+        // For merged mode, we create a temp doc to render the page, then copy it to the merged doc.
+        // Why temp doc? Because we might need to load the template PDF each time if it's a PDF template.
 
-            // Embed Image first to get dimensions
+        let currentDoc: PDFDocument;
+        if (isPdf) {
+            currentDoc = await PDFDocument.load(templateBytes);
+        } else {
+            currentDoc = await PDFDocument.create();
+            // Embed Image
             let image;
             try {
-                image = await pdfDoc.embedPng(templateBytes);
+                image = await currentDoc.embedPng(templateBytes);
             } catch {
-                image = await pdfDoc.embedJpg(templateBytes);
+                image = await currentDoc.embedJpg(templateBytes);
             }
-
-            // Create page with matching image dimensions
-            const page = pdfDoc.addPage([image.width, image.height]);
-
-            // Draw Image as Background
-            page.drawImage(image, {
-                x: 0,
-                y: 0,
-                width: image.width,
-                height: image.height
-            });
+            const page = currentDoc.addPage([image.width, image.height]);
+            page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
         }
 
-        pdfDoc.registerFontkit(fontkit);
+        currentDoc.registerFontkit(fontkit);
 
-        // Embed Fonts for this document instance
+        // Embed Fonts (Optimization: In merged mode, we could embed once, but pdf-lib copyPages handles this)
         const embeddedFonts: Record<string, any> = {};
+        embeddedFonts['Helvetica'] = await currentDoc.embedFont(StandardFonts.Helvetica);
 
-        // Standard Fonts
-        embeddedFonts['Helvetica'] = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-        // Custom Fonts
         for (const [family, buffer] of Object.entries(fontBuffers)) {
             try {
-                embeddedFonts[family] = await pdfDoc.embedFont(buffer);
+                embeddedFonts[family] = await currentDoc.embedFont(buffer);
             } catch (e) {
                 console.warn(`Failed to embed font ${family}`, e);
-                // Fallback
                 embeddedFonts[family] = embeddedFonts['Helvetica'];
             }
         }
 
-        // Get first page
-        const page = pdfDoc.getPages()[0];
+        const page = currentDoc.getPages()[0];
         const { width, height } = page.getSize();
-
-        // Calculate scale factor
-        // If it was an image we created with canvasWidth/Height, scale is 1.
-        // If it was a PDF, we scale to match.
         const scaleX = width / canvasWidth;
         const scaleY = height / canvasHeight;
 
-        // Iterate through objects to find text mappings
+        // Draw Text
         for (const obj of objects) {
-            // Support both old Fabric 'i-text'/'textbox' and new Konva 'text'
-            // Konva objects from store should have mappedColumn directly
             if ((obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') && obj.mappedColumn) {
-                const columnName = obj.mappedColumn;
-                const textValue = row[columnName] || '';
-
+                const textValue = row[obj.mappedColumn] || '';
                 if (!textValue) continue;
 
-                // Determine Font
                 const fontFamily = obj.fontFamily || 'Helvetica';
                 const font = embeddedFonts[fontFamily] || embeddedFonts['Helvetica'];
 
-                // Calculate PDF Coordinates
-                // Konva uses x/y as top-left by default for Text
                 let x = obj.x !== undefined ? obj.x : obj.left;
                 let y = obj.y !== undefined ? obj.y : obj.top;
 
-                // Legacy Fabric Origin Adjustment
+                // Legacy Fabric Origin
                 if (obj.originX === 'center') x -= (obj.width || 0) / 2;
                 if (obj.originY === 'center') y -= (obj.height || 0) / 2;
 
                 let pdfX = x * scaleX;
                 const boxWidth = (obj.width || 0) * scaleX;
-
-                // PDF Y is from bottom-left. Canvas is from top-left.
                 const fontSize = (obj.fontSize || 20) * scaleY;
                 const pdfY = height - (y * scaleY) - (fontSize * 0.8);
 
@@ -159,17 +147,20 @@ export async function generateCertificates({
                     b = parseInt(colorHex.slice(5, 7), 16) / 255;
                 }
 
-                // Handle Alignment (Center/Right)
-                // pdf-lib draws from left X. We need to offset X based on text width.
                 let textWidth = 0;
                 try {
                     textWidth = font.widthOfTextAtSize(textValue, fontSize);
+                    console.log(`[Generator] Text: ${textValue}, Font: ${fontFamily}, Size: ${fontSize}, Width: ${textWidth}`);
                 } catch (e) {
-                    console.warn("Could not measure text width", e);
+                    console.error("[Generator] Error measuring text width:", e);
                 }
 
+                console.log(`[Generator] Align: ${obj.align}, X: ${x} -> PDFX: ${pdfX}, BoxW: ${boxWidth}`);
+
                 if (obj.align === 'center') {
-                    pdfX += (boxWidth - textWidth) / 2;
+                    const offset = (boxWidth - textWidth) / 2;
+                    console.log(`[Generator] Centering Offset: ${offset}`);
+                    pdfX += offset;
                 } else if (obj.align === 'right') {
                     pdfX += boxWidth - textWidth;
                 }
@@ -184,14 +175,67 @@ export async function generateCertificates({
             }
         }
 
-        // Save
-        const pdfBytes = await pdfDoc.save();
-        const fileName = `Certificate-${i + 1}.pdf`;
+        // --- SAVE / MERGE LOGIC ---
 
-        zip.file(fileName, pdfBytes);
+        if (exportFormat === 'pdf' && exportStructure === 'merged') {
+            // Copy page to merged doc
+            const [copiedPage] = await mergedPdfDoc!.copyPages(currentDoc, [0]);
+            mergedPdfDoc!.addPage(copiedPage);
+        } else if (exportFormat === 'pdf') {
+            // Individual PDF
+            const pdfBytes = await currentDoc.save();
+            zip.file(`Certificate-${i + 1}-${row.Name || 'user'}.pdf`, pdfBytes);
+        } else if (exportFormat === 'jpg') {
+            // JPG Export
+            // Since pdf-lib can't export to JPG, we actually save the PDF bytes here
+            // and relying on the FACT that we can't do this purely server-side (headless) easily without canvas.
+            // BUT, wait, we are client-side in the browser executing this.
+            // We can use pdfjs-dist to render THIS `pdfBytes` to a canvas and get a blob.
+
+            const pdfBytes = await currentDoc.save();
+
+            // We need to render this PDF page to an image.
+            // Dynamic import pdfjs
+            try {
+                // Dynamically load to avoid SSR issues if any
+                const pdfjsLib = await import('pdfjs-dist');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+                const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(1);
+
+                // Render to canvas
+                const viewport = page.getViewport({ scale: 2 }); // 2x scale for better quality
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                if (context) {
+                    await page.render({ canvasContext: context, viewport: viewport } as any).promise;
+
+                    // Canvas to Blob
+                    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+                    if (blob) {
+                        zip.file(`Certificate-${i + 1}-${row.Name || 'user'}.jpg`, blob);
+                    }
+                }
+            } catch (e) {
+                console.error("JPG Conversion failed", e);
+                // Fallback to PDF if JPG fails? Or valid zip with error log?
+                zip.file(`Certificate-${i + 1}-ERROR.txt`, "Failed to convert to JPG: " + e);
+            }
+        }
     }
 
-    // Generate ZIP
-    const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, 'certificates.zip');
+    // Finalize
+    if (exportFormat === 'pdf' && exportStructure === 'merged' && mergedPdfDoc) {
+        const mergedBytes = await mergedPdfDoc.save();
+        saveAs(new Blob([mergedBytes as any], { type: 'application/pdf' }), 'certificates-merged.pdf');
+    } else {
+        // Individual PDFs or JPGs -> ZIP
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, `certificates-${exportFormat}.zip`);
+    }
 }

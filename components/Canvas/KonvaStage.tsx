@@ -9,9 +9,18 @@ import clsx from 'clsx';
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper for loading images
-const URLImage = ({ src, nodeProps, isSelected, onClick, onTransformEnd }: any) => {
-    const [image] = useImage(src, 'anonymous');
+const URLImage = ({ src, nodeProps, isSelected, onClick, onTransformEnd, updateNode }: any) => {
+    const [image] = useImage(src || '', 'anonymous');
     const shapeRef = useRef<any>(null);
+
+    useEffect(() => {
+        if (image && updateNode && (!nodeProps.width || !nodeProps.height)) {
+            updateNode(nodeProps.id, {
+                width: image.width,
+                height: image.height
+            });
+        }
+    }, [image, nodeProps.width, nodeProps.height, nodeProps.id, updateNode]);
 
     // Initial center logic could go here if needed, but we rely on store props
     return (
@@ -331,6 +340,7 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                                     isSelected={isSelected}
                                     onClick={() => !isRefBg && activeTool === 'select' && selectNode(node.id)}
                                     activeTool={activeTool}
+                                    updateNode={updateNode}
                                     nodeProps={{
                                         x: node.x,
                                         y: node.y,
@@ -339,6 +349,8 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                                         rotation: node.rotation,
                                         scaleX: node.scaleX,
                                         scaleY: node.scaleY,
+                                        width: node.width,
+                                        height: node.height,
                                         listening: activeTool !== 'hand' && !isRefBg, // Disable interactions if Hand tool or Background
                                     }}
                                     onTransformEnd={(e: any) => handleNodeChange(node.id, e)}
