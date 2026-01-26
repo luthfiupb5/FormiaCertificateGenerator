@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Formia - Bulk Certificate Generator
 
-## Getting Started
+Formia is a powerful and intuitive web application designed to streamline the process of designing and generating certificates at scale. Built with modern web technologies, it allows users to create beautiful certificates, map data dynamically, and generate thousands of PDFs in seconds.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Visual Editor**: Drag-and-drop interface to design certificates with ease.
+- **Unlimited Layers**: Stack, group, and organize text, images, and shapes.
+- **Bulk Generation**: Upload your data (CSV/Excel) and generate thousands of personalized certificates instantly.
+- **Dynamic Mapping**: Easily map data columns to placeholders in your design.
+- **Cloud Sync**: Your projects are saved and accessible from anywhere.
+- **High-Quality Export**: Download certificates as high-resolution PDF, PNG, or JPG files.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How It Works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1.  **Upload Template**: Start by uploading your certificate base design (PDF or Image).
+2.  **Design**: Use the visual editor to add text fields, placeholders, and other elements.
+3.  **Import Data**: Upload your recipient list via CSV or Excel file.
+4.  **Map Fields**: Connect your data columns (e.g., "Name", "Date") to the placeholders in your design.
+5.  **Generate**: Click generate and watch as thousands of certificates are created in seconds, ready for download.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Technologies Used
 
-## Learn More
+-   **Next.js 14**: The React framework for production.
+-   **Tailwind CSS**: For modern and responsive styling.
+-   **Konva.js**: For high-performance 2D canvas manipulations.
+-   **PDF-lib**: For PDF generation and modification.
+-   **Supabase**: For backend and authentication.
 
-To learn more about Next.js, take a look at the following resources:
+## Developed By
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Luthfi Bassam U P**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+&copy; 2026 Formia. All rights reserved.
