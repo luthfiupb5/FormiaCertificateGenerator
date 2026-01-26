@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard, CheckCircle2, Zap, Layers, Globe } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import ThreeDCard from '@/components/ThreeDCard';
 
 export default function LandingPage() {
   const [user, setUser] = useState<any>(null);
@@ -100,31 +101,18 @@ export default function LandingPage() {
         </div>
 
         {/* Hero Visual / Glow */}
-        <div className="mt-20 relative w-full max-w-5xl mx-auto aspect-[16/9] bg-gradient-to-br from-white/5 to-white/0 rounded-2xl border border-white/10 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-1000 delay-500 backdrop-blur-sm group">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-violet-500/10 via-transparent to-transparent"></div>
-
-          {/* Abstract UI Representation */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#0A0A0A] rounded-xl border border-white/10 flex flex-col shadow-2xl group-hover:scale-[1.02] transition-transform duration-700 ease-out">
-            {/* Window Header */}
-            <div className="h-10 border-b border-white/5 flex items-center px-4 gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/20"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500/20"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500/20"></div>
+        {/* Hero Visual / Glow */}
+        <div className="mt-20 w-full max-w-5xl mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-500">
+          <ThreeDCard>
+            {/* App Screenshot */}
+            <div className="rounded-xl overflow-hidden shadow-2xl">
+              <img
+                src="/assets/canvas%20demo.png"
+                alt="Formia Application Interface"
+                className="w-full h-auto object-contain"
+              />
             </div>
-            {/* Content */}
-            <div className="flex-1 p-8 flex gap-8">
-              <div className="w-1/4 h-full space-y-3">
-                <div className="h-8 w-full bg-white/5 rounded-md animate-pulse"></div>
-                <div className="h-4 w-2/3 bg-white/5 rounded-md"></div>
-                <div className="h-4 w-1/2 bg-white/5 rounded-md"></div>
-              </div>
-              <div className="flex-1 h-full bg-grid-white/[0.02] rounded-lg border border-white/5 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs uppercase tracking-widest font-mono">
-                  Canvas Preview
-                </div>
-              </div>
-            </div>
-          </div>
+          </ThreeDCard>
         </div>
 
         {/* Trusted By Carousel */}

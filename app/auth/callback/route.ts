@@ -11,6 +11,20 @@ export async function GET(request: Request) {
         const supabase = await createClient();
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                // Upsert email into public.profiles
+                try {
+                    await supabase.from('profiles').upsert({
+                        id: user.id,
+                        email: user.email,
+                        updated_at: new Date().toISOString(),
+                    });
+                } catch (err) {
+                    console.error('Error updating user profile:', err);
+                    // Continue with redirect even if profile update fails
+                }
+            }
             return NextResponse.redirect(`${origin}${next}`);
         }
     }
