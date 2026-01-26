@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, Loader2 } from 'lucide-react';
 import NewProjectModal from '@/components/Dashboard/NewProjectModal';
 import Workspace from './Workspace';
+import { createClient } from '@/lib/supabase/client';
+import { useSearchParams } from 'next/navigation';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 export default function Editor() {
     const [templateUrl, setTemplateUrl] = useState<string | null>(null);
@@ -12,6 +16,55 @@ export default function Editor() {
     const [projectName, setProjectName] = useState<string>('');
     const [initialDataRows, setInitialDataRows] = useState<any[]>([]);
     const [initialDataHeaders, setInitialDataHeaders] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Check for ID
+    useEffect(() => {
+        const loadProject = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+
+            if (id) {
+                setIsLoading(true);
+                const supabase = createClient();
+                const { data: project, error } = await supabase
+                    .from('projects')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (project && !error) {
+                    setProjectName(project.name);
+                    setOriginalFileName(project.original_file_name || 'Template');
+                    setTemplateUrl(project.template_url);
+
+                    // Parse CSV if exists
+                    if (project.csv_url) {
+                        try {
+                            // Fetch CSV content
+                            const response = await fetch(project.csv_url);
+                            const csvText = await response.text();
+                            Papa.parse(csvText, {
+                                header: true,
+                                skipEmptyLines: true,
+                                complete: (results) => {
+                                    setInitialDataRows(results.data);
+                                    setInitialDataHeaders(results.meta.fields || []);
+                                },
+                            });
+                        } catch (e) {
+                            console.error("Error loading CSV:", e);
+                        }
+                    }
+                }
+                setIsLoading(false);
+            } else {
+                setIsLoading(false);
+            }
+        };
+
+        loadProject();
+    }, []);
 
     // If templateUrl is set, we mount the Workspace
     // If not, we mount the NewProjectModal
@@ -25,6 +78,11 @@ export default function Editor() {
         setInitialDataRows(data.dataRows);
         setInitialDataHeaders(data.dataHeaders);
         setTemplateUrl(data.templateUrl);
+
+        // Push URL with ID
+        if (data.id) {
+            window.history.pushState({}, '', `?id=${data.id}`);
+        }
     };
 
     const handleReset = () => {
@@ -55,6 +113,14 @@ export default function Editor() {
         setUser(null);
         window.location.href = '/';
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex bg-[#050505] h-screen w-full items-center justify-center text-white">
+                <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-screen w-full flex-col bg-background text-foreground overflow-hidden font-sans">

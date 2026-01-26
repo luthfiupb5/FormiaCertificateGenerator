@@ -196,10 +196,13 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 text-center text-sm text-neutral-600 relative z-10 border-t border-white/5 mt-20">
-        <p className="mb-2">Copyrights © 2026. Luthfi Bassam U P. An AI enthusiasit kindof things</p>
-        <div className="flex justify-center gap-4">
-          <Link href="/terms-and-conditions" className="hover:text-neutral-400 transition-colors">Terms and Conditions</Link>
+      <footer className="py-8 pb-32 relative z-10 border-t border-white/5 mt-20">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left text-sm text-neutral-400">
+          <p>copyright © 2026 Luthfi Bassam U P. Designed, developed, and driven by AI thinking.</p>
+          <div className="flex gap-6">
+            <Link href="/terms-and-conditions" className="hover:text-white transition-colors">Terms and Conditions</Link>
+            <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+          </div>
         </div>
       </footer>
 

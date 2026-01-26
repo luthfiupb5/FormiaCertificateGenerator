@@ -76,6 +76,16 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         }
     }, [dataRows.length]);
 
+    // Auto-save Effect
+    useEffect(() => {
+        if (!selectedNodeId && nodes.length > 0) { // Simple trigger: save when not dragging/editing heavily, or use debounce
+            const timer = setTimeout(() => {
+                handleSave();
+            }, 3000); // Auto-save after 3 seconds of inactivity
+            return () => clearTimeout(timer);
+        }
+    }, [nodes, selectedNodeId]);
+
     // Helper for keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
