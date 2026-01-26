@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard, CheckCircle2, Zap, Layers, Globe } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ThreeDCard from '@/components/ThreeDCard';
+import GlassTiltCard from '@/components/GlassTiltCard';
 
 export default function LandingPage() {
   const [user, setUser] = useState<any>(null);
@@ -29,17 +30,17 @@ export default function LandingPage() {
       </div>
 
       {/* Floating Navbar */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-50 transition-all duration-300">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-3xl z-50 transition-all duration-300">
         <div className="px-6 py-3 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex justify-between items-center shadow-2xl shadow-black/50">
           <Link href="/" className="text-lg font-bold tracking-tight flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white text-xs shadow-lg shadow-violet-500/20 font-heading">F</div>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 font-heading">Formia</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">
-            <Link href="#features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="#" className="hover:text-white transition-colors">Solutions</Link>
-            <Link href="#" className="hover:text-white transition-colors">Pricing</Link>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-neutral-400">
+            <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+            <Link href="/ourproducts" className="hover:text-white transition-colors">Products</Link>
+            <Link href="/developer" className="hover:text-white transition-colors">About Us</Link>
           </div>
 
           <div className="flex gap-4 items-center">
@@ -59,7 +60,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-20 md:pt-52 md:pb-32 px-4 flex flex-col items-center text-center z-10">
+      <section className="relative pt-24 pb-20 md:pt-32 md:pb-32 px-4 flex flex-col items-center text-center z-10">
 
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-violet-300 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-100 backdrop-blur-sm">
@@ -101,44 +102,9 @@ export default function LandingPage() {
         </div>
 
         {/* Hero Visual / Glow */}
-        {/* Hero Visual / Glow */}
-        <div className="mt-20 w-full max-w-5xl mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-500">
-          <ThreeDCard>
-            {/* App Screenshot */}
-            <div className="rounded-xl overflow-hidden shadow-2xl">
-              <img
-                src="/assets/canvas%20demo.png"
-                alt="Formia Application Interface"
-                className="w-full h-auto object-contain"
-              />
-            </div>
-          </ThreeDCard>
-        </div>
 
-        {/* Trusted By Carousel */}
-        <div className="mt-24 w-full">
-          <p className="text-sm font-medium text-neutral-500 mb-8 uppercase tracking-widest">Trusted by 200+ companies</p>
 
-          <div className="relative w-full overflow-hidden group">
-            {/* Gradient Masks (Feather) */}
-            <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none"></div>
 
-            <div className="flex gap-20 animate-marquee whitespace-nowrap hover:[animation-play-state:paused] w-max">
-              {/* Triple the logos for smoother seamless loop on wide screens */}
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex gap-20 items-center">
-                  {['FeatherDev', 'Boltshift', 'GlobalBank', 'Lightbox', 'Spherule', 'Nietzsche'].map((name) => (
-                    <span key={`${i}-${name}`} className="text-xl font-bold font-sans tracking-tight text-neutral-600 hover:text-white transition-colors cursor-default flex items-center gap-3">
-                      <div className="w-6 h-6 rounded bg-neutral-800 flex-shrink-0"></div>
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </section>
 
 
@@ -211,12 +177,13 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Layer */}
-      <section className="py-20 px-4 relative z-10">
-        <div className="max-w-4xl mx-auto rounded-[3rem] p-1 bg-gradient-to-r from-violet-500/50 via-blue-500/50 to-violet-500/50">
-          <div className="bg-[#050505] rounded-[calc(3rem-4px)] px-6 py-20 text-center relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/20 blur-[100px] rounded-full"></div>
+      <section className="py-20 px-4 relative z-10 w-full flex justify-center">
+        <div className="max-w-4xl w-full">
+          <GlassTiltCard className="text-center group">
+            {/* Background Decor */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/20 blur-[100px] rounded-full pointer-events-none"></div>
 
-            <div className="relative z-10">
+            <div className="relative z-10 p-12">
               <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-8">Ready to start?</h2>
               <Link href="/auth/signup">
                 <button className="px-10 py-4 rounded-full bg-white text-black font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
@@ -224,20 +191,15 @@ export default function LandingPage() {
                 </button>
               </Link>
             </div>
-          </div>
+          </GlassTiltCard>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 bg-black py-12 px-6 relative z-10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600"></div>
-            <span className="font-bold tracking-tight">Formia</span>
-          </div>
-          <div className="text-sm text-neutral-500">
-            &copy; 2024 Formia Inc. Design by Antigravity.
-          </div>
+      <footer className="py-8 text-center text-sm text-neutral-600 relative z-10 border-t border-white/5 mt-20">
+        <p className="mb-2">Copyrights © 2026. Luthfi Bassam U P. An AI enthusiasit kindof things</p>
+        <div className="flex justify-center gap-4">
+          <Link href="/terms-and-conditions" className="hover:text-neutral-400 transition-colors">Terms and Conditions</Link>
         </div>
       </footer>
 

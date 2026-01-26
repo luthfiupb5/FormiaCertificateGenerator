@@ -18,9 +18,12 @@ import { useRouter } from 'next/navigation';
 interface WorkspaceProps {
     templateUrl: string;
     originalFileName: string;
+    initialProjectName?: string;
+    initialDataRows?: any[];
+    initialDataHeaders?: string[];
 }
 
-export default function Workspace({ templateUrl, originalFileName }: WorkspaceProps) {
+export default function Workspace({ templateUrl, originalFileName, initialProjectName, initialDataRows, initialDataHeaders }: WorkspaceProps) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const router = useRouter();
@@ -48,8 +51,8 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
 
     // Data State
     const [showDataUploader, setShowDataUploader] = useState(false);
-    const [dataHeaders, setDataHeaders] = useState<string[]>([]);
-    const [dataRows, setDataRows] = useState<any[]>([]);
+    const [dataHeaders, setDataHeaders] = useState<string[]>(initialDataHeaders || []);
+    const [dataRows, setDataRows] = useState<any[]>(initialDataRows || []);
     const [showDataPreview, setShowDataPreview] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
 
@@ -65,11 +68,13 @@ export default function Workspace({ templateUrl, originalFileName }: WorkspacePr
         return mappingStatus;
     }, [nodes, dataHeaders]);
 
-    // Auto-prompt Data Upload
+    // Auto-prompt Data Upload ONLY if no data is present
     useEffect(() => {
-        const timer = setTimeout(() => setShowDataUploader(true), 600);
-        return () => clearTimeout(timer);
-    }, []);
+        if (dataRows.length === 0) {
+            const timer = setTimeout(() => setShowDataUploader(true), 600);
+            return () => clearTimeout(timer);
+        }
+    }, [dataRows.length]);
 
     // Helper for keyboard shortcuts
     useEffect(() => {

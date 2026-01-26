@@ -3,28 +3,36 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { RefreshCcw } from 'lucide-react';
-import UploadScreen from './UploadScreen';
+import NewProjectModal from '@/components/Dashboard/NewProjectModal';
 import Workspace from './Workspace';
 
 export default function Editor() {
     const [templateUrl, setTemplateUrl] = useState<string | null>(null);
     const [originalFileName, setOriginalFileName] = useState<string>('');
+    const [projectName, setProjectName] = useState<string>('');
+    const [initialDataRows, setInitialDataRows] = useState<any[]>([]);
+    const [initialDataHeaders, setInitialDataHeaders] = useState<string[]>([]);
 
     // If templateUrl is set, we mount the Workspace
-    // If not, we mount the UploadScreen
+    // If not, we mount the NewProjectModal
     // This simple conditional rendering ensures that when we switch,
     // the components are completely unmounted/remounted, clearing any stuck state.
 
-    const handleTemplateLoaded = (url: string, name: string) => {
-        console.log("Editor: Template loaded", url, name);
-        setTemplateUrl(url);
-        setOriginalFileName(name);
+    const handleProjectCreated = (data: any) => {
+        console.log("Editor: Project Created", data);
+        setProjectName(data.name);
+        setOriginalFileName(data.templateOriginalName);
+        setInitialDataRows(data.dataRows);
+        setInitialDataHeaders(data.dataHeaders);
+        setTemplateUrl(data.templateUrl);
     };
 
     const handleReset = () => {
         if (confirm('Are you sure you want to reset? This will clear everything.')) {
             setTemplateUrl(null);
             setOriginalFileName('');
+            setProjectName('');
+            setInitialDataRows([]);
         }
     };
 
@@ -111,9 +119,15 @@ export default function Editor() {
                         key={templateUrl} // Force re-mount if url changes
                         templateUrl={templateUrl}
                         originalFileName={originalFileName}
+                        initialProjectName={projectName} // Pass project name
+                        initialDataRows={initialDataRows} // Pass initial CSV data
+                        initialDataHeaders={initialDataHeaders} // Pass headers
                     />
                 ) : (
-                    <UploadScreen onTemplateLoaded={handleTemplateLoaded} />
+                    <NewProjectModal
+                        onClose={() => { }} // No close action for now as it replaces the main screen
+                        onCreate={handleProjectCreated}
+                    />
                 )}
             </main>
         </div>
