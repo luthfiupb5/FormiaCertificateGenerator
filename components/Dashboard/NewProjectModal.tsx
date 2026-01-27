@@ -8,6 +8,7 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
 interface NewProjectData {
+    id?: string;
     name: string;
     templateUrl: string;
     templateOriginalName: string;
@@ -63,48 +64,100 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
         setError(null);
 
         try {
-            // 1. Process Template
-            let templateUrl = '';
-            if (templateFile.type === 'application/pdf') {
-                const result = await renderPdfToImage(templateFile);
-                templateUrl = result.url;
-            } else {
-                templateUrl = URL.createObjectURL(templateFile);
+            // 1. Upload Template to R2
+            const templateFormData = new FormData();
+            templateFormData.append('file', templateFile);
+            templateFormData.append('folder', 'templates');
+
+            const templateUploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: templateFormData,
+            });
+
+            if (!templateUploadRes.ok) {
+                throw new Error('Failed to upload template');
             }
 
-            // 2. Process Data (if exists)
+            const { url: templateUrl } = await templateUploadRes.json();
+
+            // 2. Upload CSV to R2 (if exists)
+            let csvUrl = null;
             let dataRows: any[] = [];
             let dataHeaders: string[] = [];
 
             if (dataFile) {
-                if (dataFile.name.endsWith('.csv')) {
-                    await new Promise<void>((resolve, reject) => {
-                        Papa.parse(dataFile, {
-                            header: true,
-                            skipEmptyLines: true,
-                            complete: (results) => {
-                                dataRows = results.data;
-                                dataHeaders = results.meta.fields || [];
-                                resolve();
-                            },
-                            error: (err) => reject(err),
+                const dataFormData = new FormData();
+                dataFormData.append('file', dataFile);
+                dataFormData.append('folder', 'data');
+
+                const dataUploadRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: dataFormData,
+                });
+
+                if (dataUploadRes.ok) {
+                    const { url } = await dataUploadRes.json();
+                    csvUrl = url;
+
+                    // Parse CSV/Excel for preview
+                    if (dataFile.name.endsWith('.csv')) {
+                        await new Promise<void>((resolve, reject) => {
+                            Papa.parse(dataFile, {
+                                header: true,
+                                skipEmptyLines: true,
+                                complete: (results) => {
+                                    dataRows = results.data;
+                                    dataHeaders = results.meta.fields || [];
+                                    resolve();
+                                },
+                                error: (err) => reject(err),
+                            });
                         });
-                    });
-                } else {
-                    // Excel
-                    const arrayBuffer = await dataFile.arrayBuffer();
-                    const workbook = XLSX.read(arrayBuffer);
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    dataRows = XLSX.utils.sheet_to_json(sheet);
-                    if (dataRows.length > 0) {
-                        dataHeaders = Object.keys(dataRows[0]);
+                    } else {
+                        // Excel
+                        const arrayBuffer = await dataFile.arrayBuffer();
+                        const workbook = XLSX.read(arrayBuffer);
+                        const sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[sheetName];
+                        dataRows = XLSX.utils.sheet_to_json(sheet);
+                        if (dataRows.length > 0) {
+                            dataHeaders = Object.keys(dataRows[0]);
+                        }
                     }
                 }
             }
 
-            // 3. Return Data
+            // 3. Save Project to Supabase
+            const { createClient } = await import('@/lib/supabase/client');
+            const supabase = createClient();
+
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                throw new Error('You must be logged in to create a project');
+            }
+
+            const { data: project, error: dbError } = await supabase
+                .from('projects')
+                .insert({
+                    user_id: user.id,
+                    name: projectName,
+                    template_url: templateUrl,
+                    original_file_name: templateFile.name,
+                    csv_url: csvUrl,
+                    status: 'draft',
+                })
+                .select()
+                .single();
+
+            if (dbError) {
+                console.error('Database error:', dbError);
+                throw new Error('Failed to save project to database');
+            }
+
+            // 4. Return Data to Editor
             onCreate({
+                id: project.id,
                 name: projectName,
                 templateUrl,
                 templateOriginalName: templateFile.name,
