@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useSearchParams } from 'next/navigation';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { useCanvasStore } from '@/lib/store';
 
 export default function Editor() {
     const [templateUrl, setTemplateUrl] = useState<string | null>(null);
@@ -17,10 +18,14 @@ export default function Editor() {
     const [initialDataRows, setInitialDataRows] = useState<any[]>([]);
     const [initialDataHeaders, setInitialDataHeaders] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { loadNodes, clearNodes } = useCanvasStore();
 
-    // Check for ID
+    // Check for ID and load project
     useEffect(() => {
         const loadProject = async () => {
+            // Clear canvas nodes when component mounts
+            clearNodes();
+
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id');
 
@@ -37,6 +42,11 @@ export default function Editor() {
                     setProjectName(project.name);
                     setOriginalFileName(project.original_file_name || 'Template');
                     setTemplateUrl(project.template_url);
+
+                    // Load canvas nodes if they exist
+                    if (project.canvas_data) {
+                        loadNodes(project.canvas_data);
+                    }
 
                     // Parse CSV if exists
                     if (project.csv_url) {

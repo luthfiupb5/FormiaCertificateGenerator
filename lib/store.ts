@@ -33,6 +33,8 @@ interface CanvasState {
     addNode: (node: CanvasNode) => void;
     updateNode: (id: string, updates: Partial<CanvasNode>) => void;
     removeNode: (id: string) => void;
+    clearNodes: () => void; // Clear all nodes
+    loadNodes: (nodes: CanvasNode[]) => void; // Load nodes from database
 
     // Selection
     selectedNodeId: string | null;
@@ -85,6 +87,20 @@ export const useCanvasStore = create<CanvasState>((set) => ({
         nodes: state.nodes.filter((node) => node.id !== id),
         future: []
     })),
+
+    clearNodes: () => set({
+        nodes: [],
+        past: [],
+        future: [],
+        selectedNodeId: null
+    }),
+
+    loadNodes: (nodes) => set({
+        nodes: nodes,
+        past: [],
+        future: [],
+        selectedNodeId: null
+    }),
 
     undo: () => set((state) => {
         if (state.past.length === 0) return state;
