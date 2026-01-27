@@ -39,13 +39,17 @@ export default function Editor() {
                     .single();
 
                 if (project && !error) {
+                    console.log('Loaded project:', project);
                     setProjectName(project.name);
                     setOriginalFileName(project.original_file_name || 'Template');
                     setTemplateUrl(project.template_url);
 
                     // Load canvas nodes if they exist
-                    if (project.canvas_data) {
+                    if (project.canvas_data && Array.isArray(project.canvas_data)) {
+                        console.log('Loading canvas nodes:', project.canvas_data);
                         loadNodes(project.canvas_data);
+                    } else {
+                        console.log('No canvas data found');
                     }
 
                     // Parse CSV if exists
