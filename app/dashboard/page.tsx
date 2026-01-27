@@ -60,6 +60,25 @@ export default function DashboardPage() {
 
     const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    const handleDeleteProject = async (projectId: string) => {
+        if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
+
+        try {
+            const supabase = createClient();
+            const { error } = await supabase
+                .from('projects')
+                .delete()
+                .eq('id', projectId);
+
+            if (error) throw error;
+
+            setProjects(projects.filter(p => p.id !== projectId));
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            alert('Failed to delete project');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-black font-sans selection:bg-primary/30">
             {/* Dashboard Header */}
@@ -179,7 +198,11 @@ export default function DashboardPage() {
 
                                 {/* Project List */}
                                 {filteredProjects.map((project) => (
-                                    <ProjectCard key={project.id} project={project} />
+                                    <ProjectCard
+                                        key={project.id}
+                                        project={project}
+                                        onDelete={handleDeleteProject}
+                                    />
                                 ))}
                             </div>
                         ) : (
