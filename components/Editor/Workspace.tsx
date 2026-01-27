@@ -156,6 +156,42 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         setShowExportModal(true);
     };
 
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                alert('Please log in to save your project.');
+                setIsSaving(false);
+                return;
+            }
+            const params = new URLSearchParams(window.location.search);
+            const projectId = params.get('id') || uuidv4();
+
+            // Filter out background template node from save
+            const nodesToSave = nodes.filter(n => n.id !== 'background-template');
+
+            const projectData = {
+                id: projectId,
+                user_id: user.id,
+                name: projectName || 'Untitled Project',
+                canvas_data: nodesToSave,
+                updated_at: new Date().toISOString(),
+            };
+
+            const { error } = await supabase.from('projects').upsert(projectData).select();
+            if (error) throw error;
+            if (!params.get('id')) {
+                window.history.pushState({}, '', `?id=${projectId}`);
+            }
+        } catch (e: any) {
+            console.error('Save failed:', e);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
 
     const handleExportConfirm = async (config: ExportConfig) => {
