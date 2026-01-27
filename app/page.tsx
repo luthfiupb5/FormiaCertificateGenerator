@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard, CheckCircle2, Zap, Layers, Globe } from 'lucide-react';
+import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard, CheckCircle2, Zap, Layers, Globe, Menu, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ThreeDCard from '@/components/ThreeDCard';
 import GlassTiltCard from '@/components/GlassTiltCard';
 
 export default function LandingPage() {
   const [user, setUser] = useState<any>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -31,33 +32,149 @@ export default function LandingPage() {
 
       {/* Floating Navbar */}
       <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-3xl z-50 transition-all duration-300">
-        <div className="px-6 py-3 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex justify-between items-center shadow-2xl shadow-black/50">
+        <div className="px-4 md:px-6 py-3 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex justify-between items-center shadow-2xl shadow-black/50">
           <Link href="/" className="text-lg font-bold tracking-tight flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white text-xs shadow-lg shadow-violet-500/20 font-heading">F</div>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 font-heading">Formia</span>
           </Link>
 
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-neutral-400">
             <Link href="/features" className="hover:text-white transition-colors">Features</Link>
             <Link href="/ourproducts" className="hover:text-white transition-colors">Products</Link>
             <Link href="/developer" className="hover:text-white transition-colors">About Us</Link>
           </div>
 
-          <div className="flex gap-4 items-center">
-            <Link href="/auth/signin" className={user ? "hidden" : "text-sm font-medium text-neutral-400 hover:text-white transition-colors"}>Log In</Link>
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex gap-4 items-center">
             {user ? (
-              <Link href="/dashboard" className="px-5 py-2 rounded-full bg-white text-black text-sm font-medium hover:bg-neutral-200 transition-colors flex items-center gap-2">
-                Dashboard <ArrowRight className="w-3 h-3" />
-              </Link>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {user.user_metadata?.avatar_url && (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt={user.user_metadata?.full_name || 'User'}
+                      className="w-8 h-8 rounded-full border-2 border-white/20"
+                    />
+                  )}
+                  <span className="text-sm text-neutral-300">
+                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  </span>
+                </div>
+                <Link href="/dashboard" className="px-5 py-2 rounded-full bg-white text-black text-sm font-medium hover:bg-neutral-200 transition-colors flex items-center gap-2">
+                  Dashboard <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             ) : (
-              <Link href="/auth/signup" className="group relative px-6 py-2 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-medium overflow-hidden transition-all hover:shadow-[0_0_20px_rgba(124,58,237,0.5)]">
-                <span className="relative z-10">Get Started</span>
-                <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 ease-out -skew-x-12 -translate-x-full"></div>
-              </Link>
+              <>
+                <Link href="/auth/signin" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Log In</Link>
+                <Link href="/auth/signup" className="group relative px-6 py-2 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-medium overflow-hidden transition-all hover:shadow-[0_0_20px_rgba(124,58,237,0.5)]">
+                  <span className="relative z-10">Get Started</span>
+                  <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 ease-out -skew-x-12 -translate-x-full"></div>
+                </Link>
+              </>
             )}
           </div>
+
+          {/* Mobile Hamburger Menu */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+          <div className="absolute inset-x-4 top-4 bottom-24 bg-white/5 backdrop-blur-2xl rounded-3xl border border-white/10 p-8 flex flex-col">
+            {/* User Profile Section */}
+            {user && (
+              <div className="mb-8 pb-6 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  {user.user_metadata?.avatar_url && (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt={user.user_metadata?.full_name || 'User'}
+                      className="w-12 h-12 rounded-full border-2 border-white/20"
+                    />
+                  )}
+                  <div>
+                    <p className="font-semibold text-white">
+                      {user.user_metadata?.full_name || 'User'}
+                    </p>
+                    <p className="text-sm text-neutral-400">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Links */}
+            <nav className="flex flex-col gap-4 mb-8">
+              <Link
+                href="/features"
+                className="text-lg font-medium text-white hover:text-violet-400 transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link
+                href="/ourproducts"
+                className="text-lg font-medium text-white hover:text-violet-400 transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Products
+              </Link>
+              <Link
+                href="/developer"
+                className="text-lg font-medium text-white hover:text-violet-400 transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                About Us
+              </Link>
+            </nav>
+
+            {/* Auth Buttons */}
+            <div className="mt-auto flex flex-col gap-3">
+              {user ? (
+                <Link
+                  href="/dashboard"
+                  className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white text-center font-medium hover:shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/signin"
+                    className="w-full px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-center font-medium hover:bg-white/10 transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white text-center font-medium hover:shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-all"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-20 md:pt-32 md:pb-32 px-4 flex flex-col items-center text-center z-10">
