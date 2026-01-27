@@ -94,23 +94,21 @@ export default function Editor() {
         }
     };
 
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+    const [user, setUser] = useState<any>(null);
 
     // Check for logged in user on mount
     useEffect(() => {
-        const stored = localStorage.getItem('formia_user');
-        if (stored) {
-            try {
-                setUser(JSON.parse(stored));
-            } catch (e) {
-                console.error("Failed to parse user", e);
-            }
-        }
+        const checkUser = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        checkUser();
     }, []);
 
-    const handleSignOut = () => {
-        localStorage.removeItem('formia_user');
-        setUser(null);
+    const handleSignOut = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
         window.location.href = '/';
     };
 
@@ -136,9 +134,9 @@ export default function Editor() {
 
                     <div className="h-4 w-px bg-white/10 mx-1" />
 
-                    {originalFileName && (
+                    {projectName && (
                         <span className="hidden md:flex text-[10px] font-bold tracking-widest uppercase text-neutral-500 bg-white/5 border border-white/5 px-3 py-1 rounded-full items-center gap-2">
-                            {originalFileName}
+                            {projectName}
                         </span>
                     )}
                 </div>
@@ -147,21 +145,27 @@ export default function Editor() {
                     {/* User Profile */}
                     {user ? (
                         <div className="flex items-center gap-3 pl-4 border-l border-white/5">
-                            <div className="flex flex-col items-end">
-                                <span className="text-xs font-medium text-white/80">{user.name}</span>
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-500 to-purple-500 flex items-center justify-center text-white text-[10px] font-bold border border-white/10 shadow-lg shadow-violet-500/20">
-                                {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                            {user.user_metadata?.avatar_url && (
+                                <img
+                                    src={user.user_metadata.avatar_url}
+                                    alt={user.user_metadata?.full_name || 'User'}
+                                    className="w-8 h-8 rounded-full border-2 border-white/10"
+                                />
+                            )}
+                            <div className="flex flex-col items-start">
+                                <span className="text-xs font-medium text-white/90">
+                                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                                </span>
                             </div>
                             <button
                                 onClick={handleSignOut}
                                 className="text-[10px] text-neutral-500 hover:text-red-400 transition-colors px-2"
                             >
-                                SigOut
+                                Sign Out
                             </button>
                         </div>
                     ) : (
-                        <Link href="/auth/login" className="px-5 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-neutral-200 transition-colors">
+                        <Link href="/auth/signin" className="px-5 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-neutral-200 transition-colors">
                             Sign In
                         </Link>
                     )}
