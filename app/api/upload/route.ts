@@ -41,12 +41,8 @@ export async function POST(request: NextRequest) {
 
         await r2.send(command);
 
-        // Generate public URL (if R2 bucket has public access enabled)
-        // Or use a custom domain if you have one configured
-        const publicUrl = `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${key}`;
-
-        // If you have a custom domain, use this instead:
-        // const publicUrl = `https://your-custom-domain.com/${key}`;
+        // Generate public URL using R2 public development URL
+        const publicUrl = `https://pub-3067cec212f844e59572ae77cdfb424b.r2.dev/${key}`;
 
         return NextResponse.json({
             url: publicUrl,
