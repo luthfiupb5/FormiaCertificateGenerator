@@ -327,89 +327,97 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                 onMouseUp={handleMouseUp}
             >
                 <Layer>
-                    {nodes.map((node) => {
-                        const isSelected = selectedNodeId === node.id;
-                        const isRefBg = node.id === 'background-template';
-                        const isEditing = editingNode === node.id;
+                    {/* Render background template first, then all other nodes */}
+                    {[...nodes]
+                        .sort((a, b) => {
+                            // Background template always renders first (bottom layer)
+                            if (a.id === 'background-template') return -1;
+                            if (b.id === 'background-template') return 1;
+                            return 0;
+                        })
+                        .map((node) => {
+                            const isSelected = selectedNodeId === node.id;
+                            const isRefBg = node.id === 'background-template';
+                            const isEditing = editingNode === node.id;
 
-                        if (node.type === 'image') {
-                            return (
-                                <URLImage
-                                    key={node.id}
-                                    src={node.src}
-                                    isSelected={isSelected}
-                                    onClick={() => !isRefBg && activeTool === 'select' && selectNode(node.id)}
-                                    activeTool={activeTool}
-                                    updateNode={updateNode}
-                                    nodeProps={{
-                                        x: node.x,
-                                        y: node.y,
-                                        id: node.id,
-                                        name: node.id,
-                                        rotation: node.rotation,
-                                        scaleX: node.scaleX,
-                                        scaleY: node.scaleY,
-                                        width: node.width,
-                                        height: node.height,
-                                        listening: activeTool !== 'hand' && !isRefBg, // Disable interactions if Hand tool or Background
-                                    }}
-                                    onTransformEnd={(e: any) => handleNodeChange(node.id, e)}
-                                />
-                            );
-                        }
+                            if (node.type === 'image') {
+                                return (
+                                    <URLImage
+                                        key={node.id}
+                                        src={node.src}
+                                        isSelected={isSelected}
+                                        onClick={() => !isRefBg && activeTool === 'select' && selectNode(node.id)}
+                                        activeTool={activeTool}
+                                        updateNode={updateNode}
+                                        nodeProps={{
+                                            x: node.x,
+                                            y: node.y,
+                                            id: node.id,
+                                            name: node.id,
+                                            rotation: node.rotation,
+                                            scaleX: node.scaleX,
+                                            scaleY: node.scaleY,
+                                            width: node.width,
+                                            height: node.height,
+                                            listening: activeTool !== 'hand' && !isRefBg, // Disable interactions if Hand tool or Background
+                                        }}
+                                        onTransformEnd={(e: any) => handleNodeChange(node.id, e)}
+                                    />
+                                );
+                            }
 
-                        if (node.type === 'text') {
-                            return (
-                                <Text
-                                    key={node.id}
-                                    id={node.id}
-                                    name={node.id}
-                                    x={node.x}
-                                    y={node.y}
-                                    text={node.text}
-                                    fontFamily={node.fontFamily || 'Inter'}
-                                    fontSize={node.fontSize || 24}
-                                    fill={node.fill || 'black'}
-                                    width={node.width}
-                                    align={node.align || 'center'}
-                                    rotation={node.rotation || 0}
-                                    scaleX={node.scaleX || 1}
-                                    scaleY={node.scaleY || 1}
-                                    draggable={activeTool === 'select'}
-                                    onClick={() => activeTool === 'select' && selectNode(node.id)}
-                                    onTap={() => activeTool === 'select' && selectNode(node.id)}
-                                    onDblClick={(e) => activeTool === 'select' && handleTextDblClick(e, node)}
-                                    opacity={isEditing ? 0 : 1} // Hide node while editing
-                                    // Transformations
-                                    onDragEnd={(e) => handleNodeChange(node.id, e)}
-                                    onTransform={(e) => {
-                                        const node = e.target;
-                                        // Compute new width based on scale
-                                        // We only allow width resizing, so we effectively "consume" the scale into width
-                                        const scaleX = node.scaleX();
+                            if (node.type === 'text') {
+                                return (
+                                    <Text
+                                        key={node.id}
+                                        id={node.id}
+                                        name={node.id}
+                                        x={node.x}
+                                        y={node.y}
+                                        text={node.text}
+                                        fontFamily={node.fontFamily || 'Inter'}
+                                        fontSize={node.fontSize || 24}
+                                        fill={node.fill || 'black'}
+                                        width={node.width}
+                                        align={node.align || 'center'}
+                                        rotation={node.rotation || 0}
+                                        scaleX={node.scaleX || 1}
+                                        scaleY={node.scaleY || 1}
+                                        draggable={activeTool === 'select'}
+                                        onClick={() => activeTool === 'select' && selectNode(node.id)}
+                                        onTap={() => activeTool === 'select' && selectNode(node.id)}
+                                        onDblClick={(e) => activeTool === 'select' && handleTextDblClick(e, node)}
+                                        opacity={isEditing ? 0 : 1} // Hide node while editing
+                                        // Transformations
+                                        onDragEnd={(e) => handleNodeChange(node.id, e)}
+                                        onTransform={(e) => {
+                                            const node = e.target;
+                                            // Compute new width based on scale
+                                            // We only allow width resizing, so we effectively "consume" the scale into width
+                                            const scaleX = node.scaleX();
 
-                                        // Reset scale to 1 and update width
-                                        node.scaleX(1);
-                                        node.scaleY(1);
-                                        node.width(Math.max(node.width() * scaleX, 30));
-                                    }}
-                                    onTransformEnd={(e) => {
-                                        const node = e.target;
-                                        // Sync final state to store
-                                        updateNode(node.id(), {
-                                            x: node.x(),
-                                            y: node.y(),
-                                            rotation: node.rotation(),
-                                            scaleX: 1, // Always 1 for text now
-                                            scaleY: 1,
-                                            width: node.width(),
-                                        });
-                                    }}
-                                />
-                            );
-                        }
-                        return null;
-                    })}
+                                            // Reset scale to 1 and update width
+                                            node.scaleX(1);
+                                            node.scaleY(1);
+                                            node.width(Math.max(node.width() * scaleX, 30));
+                                        }}
+                                        onTransformEnd={(e) => {
+                                            const node = e.target;
+                                            // Sync final state to store
+                                            updateNode(node.id(), {
+                                                x: node.x(),
+                                                y: node.y(),
+                                                rotation: node.rotation(),
+                                                scaleX: 1, // Always 1 for text now
+                                                scaleY: 1,
+                                                width: node.width(),
+                                            });
+                                        }}
+                                    />
+                                );
+                            }
+                            return null;
+                        })}
 
                     <Transformer
                         ref={transformerRef}
