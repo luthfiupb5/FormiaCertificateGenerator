@@ -26,6 +26,7 @@ interface WorkspaceProps {
 export default function Workspace({ templateUrl, originalFileName, initialProjectName, initialDataRows, initialDataHeaders }: WorkspaceProps) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [projectName, setProjectName] = useState(initialProjectName || originalFileName || 'Untitled Project');
     const router = useRouter();
 
     // Global Store
@@ -171,7 +172,7 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
             const projectData = {
                 id: projectId,
                 user_id: user.id,
-                name: originalFileName || 'Untitled Project',
+                name: projectName || 'Untitled Project',
                 updated_at: new Date().toISOString(),
             };
 
