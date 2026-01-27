@@ -50,21 +50,56 @@ export default function LandingPage() {
           <div className="hidden md:flex gap-4 items-center">
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {user.user_metadata?.avatar_url && (
-                    <img
-                      src={user.user_metadata.avatar_url}
-                      alt={user.user_metadata?.full_name || 'User'}
-                      className="w-8 h-8 rounded-full border-2 border-white/20"
-                    />
-                  )}
-                  <span className="text-sm text-neutral-300">
-                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                  </span>
-                </div>
                 <Link href="/dashboard" className="px-5 py-2 rounded-full bg-white text-black text-sm font-medium hover:bg-neutral-200 transition-colors flex items-center gap-2">
                   Dashboard <ArrowRight className="w-3 h-3" />
                 </Link>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    className="flex items-center gap-2 hover:bg-white/5 rounded-full px-3 py-1.5 transition-colors"
+                  >
+                    {user.user_metadata?.avatar_url && (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt={user.user_metadata?.full_name || 'User'}
+                        className="w-8 h-8 rounded-full border-2 border-white/20"
+                      />
+                    )}
+                    <span className="text-sm text-neutral-300">
+                      {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                    </span>
+                  </button>
+
+                  {profileDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      />
+                      <div className="absolute right-0 bottom-full mb-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-3 border-b border-white/10">
+                          <p className="text-sm font-medium text-white">
+                            {user.user_metadata?.full_name || 'User'}
+                          </p>
+                          <p className="text-xs text-neutral-400 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const supabase = createClient();
+                            await supabase.auth.signOut();
+                            window.location.href = '/';
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/5 transition-colors"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
               <>

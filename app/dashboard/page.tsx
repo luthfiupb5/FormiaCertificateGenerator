@@ -19,6 +19,8 @@ export default function DashboardPage() {
     const [projects, setProjects] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [user, setUser] = useState<any>(null);
+    const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -27,6 +29,7 @@ export default function DashboardPage() {
                 const { data: { user } } = await supabase.auth.getUser();
 
                 if (user) {
+                    setUser(user);
                     const { data, error } = await supabase
                         .from('projects')
                         .select('*')
@@ -77,14 +80,66 @@ export default function DashboardPage() {
                         />
                     </div>
                     <div className="w-px h-6 bg-white/10 hidden md:block" />
-                    <Link href="/" className="text-sm text-neutral-400 hover:text-white transition-colors">
-                        Sign Out
-                    </Link>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 p-[1px]">
-                        <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-xs font-bold">
-                            ME
+
+                    {/* User Profile Dropdown */}
+                    {user ? (
+                        <div className="relative">
+                            <button
+                                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                                className="flex items-center gap-3 hover:bg-white/5 rounded-full pl-2 pr-4 py-1.5 transition-colors border border-transparent hover:border-white/10"
+                            >
+                                {user.user_metadata?.avatar_url ? (
+                                    <img
+                                        src={user.user_metadata.avatar_url}
+                                        alt={user.user_metadata?.full_name || 'User'}
+                                        className="w-8 h-8 rounded-full border border-white/20"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 p-[1px]">
+                                        <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-xs font-bold text-white">
+                                            {user.user_metadata?.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                                        </div>
+                                    </div>
+                                )}
+                                <span className="text-sm font-medium text-neutral-300 hidden md:block">
+                                    {user.user_metadata?.full_name?.split(' ')[0] || 'User'}
+                                </span>
+                            </button>
+
+                            {profileDropdownOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setProfileDropdownOpen(false)}
+                                    />
+                                    <div className="absolute right-0 mt-2 w-56 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="p-4 border-b border-white/10 bg-white/5">
+                                            <p className="text-sm font-medium text-white">
+                                                {user.user_metadata?.full_name || 'User'}
+                                            </p>
+                                            <p className="text-xs text-neutral-400 truncate mt-1">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                        <div className="p-1">
+                                            <button
+                                                onClick={async () => {
+                                                    const supabase = createClient();
+                                                    await supabase.auth.signOut();
+                                                    window.location.href = '/';
+                                                }}
+                                                className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+                    )}
                 </div>
             </header>
 
