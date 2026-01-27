@@ -10,6 +10,7 @@ import GlassTiltCard from '@/components/GlassTiltCard';
 export default function LandingPage() {
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
