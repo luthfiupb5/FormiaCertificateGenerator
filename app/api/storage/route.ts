@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { r2 } from '@/lib/r2';
-import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export async function POST(request: NextRequest) {
@@ -50,3 +50,27 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const key = searchParams.get('key');
+
+        if (!key) {
+            return NextResponse.json({ error: 'Missing key' }, { status: 400 });
+        }
+
+        const command = new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: key,
+        });
+
+        await r2.send(command);
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error('Error deleting object:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+

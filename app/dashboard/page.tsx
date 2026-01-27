@@ -60,11 +60,44 @@ export default function DashboardPage() {
 
     const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
     const handleDeleteProject = async (projectId: string) => {
         if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
 
         try {
             const supabase = createClient();
+
+            // 1. Fetch project to get file URLs
+            const { data: project, error: fetchError } = await supabase
+                .from('projects')
+                .select('template_url, csv_url')
+                .eq('id', projectId)
+                .single();
+
+            if (fetchError) {
+                console.error("Error fetching project details:", fetchError);
+                // Continue to try deleting from DB even if fetch fails, or maybe stop? 
+                // Let's continue but warn.
+            }
+
+            // 2. Delete files from R2 if they exist
+            if (project) {
+                const deleteFile = async (url: string) => {
+                    try {
+                        const u = new URL(url);
+                        const key = u.pathname.substring(1); // Remove leading slash
+                        await fetch(`/api/storage?key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+                    } catch (e) {
+                        console.error('Error parsing/deleting file:', url, e);
+                    }
+                };
+
+                if (project.template_url) await deleteFile(project.template_url);
+                if (project.csv_url) await deleteFile(project.csv_url);
+            }
+
+            // 3. Delete from Supabase
             const { error } = await supabase
                 .from('projects')
                 .delete()
