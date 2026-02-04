@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import ProjectCard from '@/components/Dashboard/ProjectCard'; // Ensure this path is correct
@@ -21,6 +21,20 @@ export default function DashboardPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [user, setUser] = useState<any>(null);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setProfileDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -60,7 +74,7 @@ export default function DashboardPage() {
 
     const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
 
     const handleDeleteProject = async (projectId: string) => {
         if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
@@ -135,7 +149,7 @@ export default function DashboardPage() {
 
                     {/* User Profile Dropdown */}
                     {user ? (
-                        <div className="relative">
+                        <div ref={profileRef} className="relative">
                             <button
                                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                                 className="flex items-center gap-3 hover:bg-white/5 rounded-full pl-2 pr-4 py-1.5 transition-colors border border-transparent hover:border-white/10"
@@ -159,34 +173,28 @@ export default function DashboardPage() {
                             </button>
 
                             {profileDropdownOpen && (
-                                <>
-                                    <div
-                                        className="fixed inset-0 z-40"
-                                        onClick={() => setProfileDropdownOpen(false)}
-                                    />
-                                    <div className="absolute right-0 mt-2 w-56 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="p-4 border-b border-white/10 bg-white/5">
-                                            <p className="text-sm font-medium text-white">
-                                                {user.user_metadata?.full_name || 'User'}
-                                            </p>
-                                            <p className="text-xs text-neutral-400 truncate mt-1">
-                                                {user.email}
-                                            </p>
-                                        </div>
-                                        <div className="p-1">
-                                            <button
-                                                onClick={async () => {
-                                                    const supabase = createClient();
-                                                    await supabase.auth.signOut();
-                                                    window.location.href = '/';
-                                                }}
-                                                className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors flex items-center gap-2"
-                                            >
-                                                Sign Out
-                                            </button>
-                                        </div>
+                                <div className="absolute right-0 mt-2 w-56 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-4 border-b border-white/10 bg-white/5">
+                                        <p className="text-sm font-medium text-white">
+                                            {user.user_metadata?.full_name || 'User'}
+                                        </p>
+                                        <p className="text-xs text-neutral-400 truncate mt-1">
+                                            {user.email}
+                                        </p>
                                     </div>
-                                </>
+                                    <div className="p-1">
+                                        <button
+                                            onClick={async () => {
+                                                const supabase = createClient();
+                                                await supabase.auth.signOut();
+                                                window.location.href = '/';
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-white/5 hover:text-red-300 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     ) : (

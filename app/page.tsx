@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Shapes, PenTool, Download, LayoutDashboard, CheckCircle2, Zap, Layers, Globe, Menu, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -11,6 +11,20 @@ export default function LandingPage() {
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -54,7 +68,7 @@ export default function LandingPage() {
                   Dashboard <ArrowRight className="w-3 h-3" />
                 </Link>
 
-                <div className="relative">
+                <div ref={profileRef} className="relative">
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                     className="flex items-center gap-2 hover:bg-white/5 rounded-full px-3 py-1.5 transition-colors"
@@ -72,32 +86,26 @@ export default function LandingPage() {
                   </button>
 
                   {profileDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setProfileDropdownOpen(false)}
-                      />
-                      <div className="absolute right-0 bottom-full mb-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-3 border-b border-white/10">
-                          <p className="text-sm font-medium text-white">
-                            {user.user_metadata?.full_name || 'User'}
-                          </p>
-                          <p className="text-xs text-neutral-400 truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            const supabase = createClient();
-                            await supabase.auth.signOut();
-                            window.location.href = '/';
-                          }}
-                          className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/5 transition-colors"
-                        >
-                          Sign Out
-                        </button>
+                    <div className="absolute right-0 bottom-full mb-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="p-3 border-b border-white/10">
+                        <p className="text-sm font-medium text-white">
+                          {user.user_metadata?.full_name || 'User'}
+                        </p>
+                        <p className="text-xs text-neutral-400 truncate">
+                          {user.email}
+                        </p>
                       </div>
-                    </>
+                      <button
+                        onClick={async () => {
+                          const supabase = createClient();
+                          await supabase.auth.signOut();
+                          window.location.href = '/';
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/5 transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
