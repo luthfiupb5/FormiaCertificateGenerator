@@ -4,23 +4,42 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignUp() {
+    const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const supabase = createClient();
+
+    const passwordsMatch = password && confirmPassword && password === confirmPassword;
+    const isPasswordValid = password.length >= 6;
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            setLoading(false);
+            return;
+        }
+
         const { error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                data: {
+                    full_name: fullName,
+                },
+            },
         });
 
         if (error) {
@@ -44,7 +63,19 @@ export default function SignUp() {
                     </div>
                 )}
 
-                <form onSubmit={handleSignUp} className="space-y-6">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-400 mb-2">Full Name</label>
+                        <input
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-primary focus:outline-none transition-colors"
+                            required
+                            placeholder="John Doe"
+                        />
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-neutral-400 mb-2">Email</label>
                         <input
@@ -53,33 +84,74 @@ export default function SignUp() {
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-primary focus:outline-none transition-colors"
                             required
+                            placeholder="john@example.com"
                         />
                     </div>
 
-                    <div>
+                    <div className="relative">
                         <label className="block text-sm font-medium text-neutral-400 mb-2">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                            required
-                            minLength={6}
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-primary focus:outline-none transition-colors pr-10"
+                                required
+                                minLength={6}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="relative">
+                        <label className="block text-sm font-medium text-neutral-400 mb-2">Confirm Password</label>
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-primary focus:outline-none transition-colors pr-10"
+                                required
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white transition-colors"
+                            >
+                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+
+                        {/* Password Match Indicator Bar */}
+                        <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full transition-all duration-300 ${passwordsMatch
+                                        ? 'bg-green-500 w-full'
+                                        : confirmPassword.length > 0
+                                            ? 'bg-red-500 w-1/2'
+                                            : 'w-0'
+                                    }`}
+                            />
+                        </div>
+                        {confirmPassword.length > 0 && (
+                            <p className={`text-xs mt-1 ${passwordsMatch ? 'text-green-400' : 'text-red-400'}`}>
+                                {passwordsMatch ? "Passwords match" : "Passwords do not match"}
+                            </p>
+                        )}
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed hidden"
-                    >
-                        {loading ? 'Sign Up...' : 'Sign Up'}
-                    </button>
-                    {/* Hiding default button for now or keeping it? The user specifically asked for Google. Let's keep both. */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     >
                         {loading ? 'Sign Up...' : 'Sign Up'}
                     </button>
@@ -128,7 +200,7 @@ export default function SignUp() {
 
                 <p className="mt-6 text-center text-sm text-neutral-500">
                     Already have an account?{' '}
-                    <Link href="/auth/signin" className="text-primary hover:text-primary-hover">
+                    <Link href="/auth/login" className="text-primary hover:text-primary-hover">
                         Sign In
                     </Link>
                 </p>
