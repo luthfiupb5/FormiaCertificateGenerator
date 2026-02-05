@@ -57,7 +57,6 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-neutral-400">
             <Link href="/features" className="hover:text-white transition-colors">Features</Link>
             <Link href="/ourproducts" className="hover:text-white transition-colors">Products</Link>
-            <Link href="/developer" className="hover:text-white transition-colors">About Us</Link>
           </div>
 
           {/* Desktop Auth Buttons */}
@@ -177,13 +176,6 @@ export default function LandingPage() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Products
-              </Link>
-              <Link
-                href="/developer"
-                className="text-lg font-medium text-white hover:text-violet-400 transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                About Us
               </Link>
             </nav>
 
@@ -363,6 +355,7 @@ export default function LandingPage() {
           <div className="flex gap-6">
             <Link href="/terms-and-conditions" className="hover:text-white transition-colors">Terms and Conditions</Link>
             <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/developer" className="hover:text-white transition-colors">Meet the Developer</Link>
           </div>
         </div>
       </footer>
