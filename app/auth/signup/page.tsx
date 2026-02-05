@@ -14,6 +14,7 @@ export default function SignUp() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const supabase = createClient();
@@ -25,6 +26,7 @@ export default function SignUp() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setSuccess(null);
 
         if (password !== confirmPassword) {
             setError("Passwords do not match");
@@ -32,7 +34,7 @@ export default function SignUp() {
             return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -45,9 +47,10 @@ export default function SignUp() {
         if (error) {
             setError(error.message);
             setLoading(false);
+        } else if (data?.user && !data?.session) {
+            setSuccess("Account created! Please check your email to confirm your account before logging in.");
+            setLoading(false);
         } else {
-            // For email confirmation flows, usually check for session or show "Check email" message.
-            // Assuming auto-confirm or session created for now, or redirect to dashboard (will be guarded by middleware/auth state)
             router.push('/dashboard');
         }
     };
@@ -60,6 +63,12 @@ export default function SignUp() {
                 {error && (
                     <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-200 text-sm rounded-lg">
                         {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 text-green-200 text-sm rounded-lg">
+                        {success}
                     </div>
                 )}
 
@@ -134,10 +143,10 @@ export default function SignUp() {
                         <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
                             <div
                                 className={`h-full transition-all duration-300 ${passwordsMatch
-                                        ? 'bg-green-500 w-full'
-                                        : confirmPassword.length > 0
-                                            ? 'bg-red-500 w-1/2'
-                                            : 'w-0'
+                                    ? 'bg-green-500 w-full'
+                                    : confirmPassword.length > 0
+                                        ? 'bg-red-500 w-1/2'
+                                        : 'w-0'
                                     }`}
                             />
                         </div>
