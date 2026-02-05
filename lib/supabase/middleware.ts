@@ -40,6 +40,11 @@ export async function updateSession(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/developer') &&
         !request.nextUrl.pathname.startsWith('/features') &&
         !request.nextUrl.pathname.startsWith('/ourproducts') &&
+        !request.nextUrl.pathname.startsWith('/terms-and-conditions') &&
+        !request.nextUrl.pathname.startsWith('/privacy-policy') &&
+        !request.nextUrl.pathname.startsWith('/sitemap') &&
+        !request.nextUrl.pathname.startsWith('/robots') &&
+        !request.nextUrl.pathname.startsWith('/manifest') &&
         request.nextUrl.pathname !== '/'
     ) {
         // no user, potentially respond by redirecting the user to the login page
