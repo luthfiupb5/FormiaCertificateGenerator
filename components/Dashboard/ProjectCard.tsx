@@ -33,7 +33,7 @@ const formatDate = (dateString: string) => {
 
 export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
     return (
-        <div className="group relative bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/30 transition-all duration-500 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] hover:-translate-y-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+        <div className="group relative bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/30 transition-all duration-500 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] hover:-translate-y-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
             {/* Thumbnail Area */}
             <Link href={`/canvas?id=${project.id}`} className="block aspect-[4/3] bg-neutral-900 relative overflow-hidden">
                 {project.thumbnail_url ? (
@@ -58,7 +58,7 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
             </Link>
 
             {/* Content Area */}
-            <div className="p-4 bg-[#111] relative z-10">
+            <div className="p-4 bg-black/40 relative z-10 border-t border-white/5">
                 <div className="flex justify-between items-start gap-2">
                     <Link href={`/canvas?id=${project.id}`} className="block flex-1 min-w-0">
                         <h3 className="font-semibold text-white truncate group-hover:text-primary transition-colors" title={project.name}>
