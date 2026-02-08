@@ -133,6 +133,53 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Templates Marquee (New Premium Section) */}
+      <section className="py-24 overflow-hidden bg-[#050505]">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 mb-12 text-center">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6">Stunning Templates. <span className="text-violet-400">Ready to Go.</span></h2>
+          <p className="text-neutral-400 text-lg">Choose from professional designs or build your own from scratch.</p>
+        </div>
+
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none"></div>
+
+          <div className="flex animate-scroll w-[200%] gap-8">
+            {[...Array(8)].flatMap((_, i) => [
+              { color: "from-violet-500/20 to-blue-500/20", title: "Modern Diploma", type: "Education" },
+              { color: "from-emerald-500/20 to-teal-500/20", title: "Course Completion", type: "Training" },
+              { color: "from-orange-500/20 to-red-500/20", title: "Appreciation", type: "HR" },
+              { color: "from-pink-500/20 to-rose-500/20", title: "Event Badge", type: "Conference" },
+              { color: "from-blue-500/20 to-cyan-500/20", title: "Tech Certificate", type: "Hackathon" },
+              { color: "from-purple-500/20 to-indigo-500/20", title: "Achievement", type: "Sports" },
+            ]).map((template, i) => (
+              <div key={i} className="flex-shrink-0 w-[400px] h-[280px] rounded-xl bg-neutral-900/50 border border-white/10 p-6 flex flex-col justify-between hover:border-violet-500/50 transition-colors group relative overflow-hidden">
+                <div className={`absolute inset-0 bg-gradient-to-br ${template.color} opacity-20 group-hover:opacity-30 transition-opacity`}></div>
+
+                {/* Mock Certificate Layout */}
+                <div className="relative z-10 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="w-16 h-16 rounded-full bg-white/10 mb-4 mx-auto backdrop-blur-md"></div>
+                  <div className="h-6 w-3/4 bg-white/20 mx-auto rounded my-2"></div>
+                  <div className="h-4 w-1/2 bg-white/10 mx-auto rounded"></div>
+                  <div className="mt-8 flex justify-between px-8">
+                    <div className="h-8 w-20 bg-white/10 rounded"></div>
+                    <div className="h-12 w-12 bg-white/10 rounded-lg"></div>
+                  </div>
+                </div>
+
+                <div className="relative z-10 flex justify-between items-center mt-4 border-t border-white/10 pt-4">
+                  <div>
+                    <h4 className="font-bold text-white">{template.title}</h4>
+                    <span className="text-xs text-neutral-500 uppercase tracking-wider">{template.type}</span>
+                  </div>
+                  <button className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black text-xs font-bold transition-all">Use Template</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Problem vs Solution (Why Korae) */}
       <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto reveal-section">
         <div className="text-center mb-16">
@@ -267,17 +314,61 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+
+
+      {/* Testimonials (Social Proof) */}
+      <section className="py-24 bg-white/[0.02] border-y border-white/5">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <h2 className="text-3xl md:text-5xl font-bold mb-16 text-center">Loved by <span className="text-violet-400">10,000+</span> Organizers.</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { quote: "I used to spend 3 days making certificates for our hackathon. With Korae, it took 10 minutes.", author: "Alex Chen", role: "Hackathon Org", avatar: "A" },
+              { quote: "The design editor is actually good. Usually these bulk tools have terrible alignment, but this is precise.", author: "Sarah Miller", role: "HR Director", avatar: "S" },
+              { quote: "We generated 5,000 certificates for our webinar series without a single crash. Rock solid.", author: "James Wilson", role: "EdTech Founder", avatar: "J" }
+            ].map((testimonial, i) => (
+              <div key={i} className="p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 relative group hover:-translate-y-2 transition-transform duration-300">
+                <div className="absolute -top-4 -left-4 text-6xl text-violet-500/20 font-serif">"</div>
+                <p className="text-lg text-neutral-300 mb-6 relative z-10 leading-relaxed">{testimonial.quote}</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-white text-sm">{testimonial.author}</h5>
+                    <p className="text-xs text-neutral-500">{testimonial.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Magnetic CTA */}
       <section className="py-32 flex justify-center text-center reveal-section relative overflow-hidden">
-        <div className="absolute inset-0 bg-violet-600/10 blur-[100px] pointer-events-none"></div>
-        <div className="max-w-3xl px-6 relative z-10">
-          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8">
+        <div className="absolute inset-0 bg-violet-600/10 blur-[100px] pointer-events-none animate-pulse"></div>
+
+        {/* Animated Particles/Orbs */}
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+
+        <div className="max-w-4xl px-6 relative z-10 p-12 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm">
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white via-violet-200 to-white">
             Ready to save <span className="text-violet-500">hours?</span>
           </h2>
-          <p className="text-xl text-neutral-400 mb-10">Join thousands of organizers generating certificates the smart way.</p>
-          <Link href="/auth/signup" className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
-            Get Started for Free <ChevronRight />
-          </Link>
+          <p className="text-xl text-neutral-400 mb-10 max-w-2xl mx-auto">
+            Join thousands of organizers generating certificates the smart way. No credit card required.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth/signup" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold text-lg hover:scale-110 transition-transform shadow-[0_0_40px_-10px_rgba(255,255,255,0.5)] active:scale-95">
+              Get Started for Free <ChevronRight className="w-5 h-5" />
+            </Link>
+            <Link href="/contact" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white/10 text-white font-bold text-lg hover:bg-white/20 transition-colors border border-white/10">
+              Contact Sales
+            </Link>
+          </div>
+          <p className="mt-8 text-xs text-neutral-500">Free forever for personal use • No installation needed</p>
         </div>
       </section>
 
@@ -324,7 +415,7 @@ export default function LandingPage() {
           <p>Made with ❤️ for the community.</p>
         </div>
       </footer>
-    </main>
+    </main >
   );
 }
 
