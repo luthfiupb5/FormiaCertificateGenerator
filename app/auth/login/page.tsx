@@ -52,9 +52,7 @@ export default function LoginPage() {
 
          <div className="w-full max-w-md glass-panel p-8 rounded-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500 border-white/10">
             <div className="text-center mb-8">
-               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20 mx-auto mb-4">
-                  K
-               </div>
+               <img src="/assets/Logo-Light-gd.png" alt="Korae" className="h-12 w-auto mx-auto mb-4" />
                <h2 className="text-2xl font-bold">Welcome Back</h2>
                <p className="text-neutral-400 text-sm mt-2">Sign in to continue automating your certificates</p>
             </div>

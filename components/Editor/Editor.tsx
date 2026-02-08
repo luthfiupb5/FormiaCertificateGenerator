@@ -140,10 +140,7 @@ export default function Editor() {
             <header className="absolute top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl h-14 rounded-full border border-white/5 bg-[#050505]/80 backdrop-blur-xl flex items-center px-2 justify-between z-50 shadow-2xl shadow-black/50 overflow-hidden ring-1 ring-white/5">
                 <div className="flex items-center gap-3 pl-2">
                     <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white font-bold font-heading text-xs shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform">
-                            K
-                        </div>
-                        <h1 className="text-sm font-bold font-heading tracking-tight text-white/90">Korae</h1>
+                        <img src="/assets/Logo-Light-gd.png" alt="Korae" className="h-8 w-auto group-hover:scale-105 transition-transform" />
                     </Link>
 
                     <div className="h-4 w-px bg-white/10 mx-1" />

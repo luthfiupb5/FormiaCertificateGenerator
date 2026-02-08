@@ -58,7 +58,10 @@ export default function SignUp() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-black text-white p-4">
             <div className="w-full max-w-md p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <h2 className="text-3xl font-serif font-bold text-center mb-8">Create Account</h2>
+                <div className="text-center mb-8">
+                    <img src="/assets/Logo-Light-gd.png" alt="Korae" className="h-12 w-auto mx-auto mb-4" />
+                    <h2 className="text-3xl font-serif font-bold">Create Account</h2>
+                </div>
 
                 {error && (
                     <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-200 text-sm rounded-lg">

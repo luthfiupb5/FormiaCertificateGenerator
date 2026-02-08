@@ -60,8 +60,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-6 md:px-12 pointer-events-none">
         <div className="pointer-events-auto">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-sm">K</div>
-            <span className="font-heading font-bold text-lg tracking-tight">Korae</span>
+            <img src="/assets/Logo-Light-gd.png" alt="Korae" className="h-10 w-auto" />
           </Link>
         </div>
 
@@ -361,8 +360,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs">K</div>
-              <span className="font-heading font-bold text-xl">Korae</span>
+              <img src="/assets/Logo-Light-gd.png" alt="Korae" className="h-8 w-auto" />
             </div>
             <p className="text-neutral-500 max-w-sm mb-6">
               Korae is the premier online tool for bulk certificate generation. We help educators, HR professionals, and event organizers automate their workflow with pixel-perfect design tools.
