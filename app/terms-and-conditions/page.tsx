@@ -32,7 +32,7 @@ export default function TermsAndConditions() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4">Terms</h2>
                         <p>
-                            By accessing the website at <a href="https://formia.luthfibassam.space/" className="text-violet-400 hover:text-violet-300 underline underline-offset-4">https://formia.luthfibassam.space/</a>, you are agreeing to be bound by these terms of service, all applicable laws, regulations, and agree that you are responsible for compliance with any applicable local laws. If you do not agree with any of these terms, you are prohibited from using or accessing this site. The materials contained in this website are protected by applicable copyright and trademark law.
+                            By accessing the website at <a href="https://leenox.luthfibassam.space/" className="text-violet-400 hover:text-violet-300 underline underline-offset-4">https://leenox.luthfibassam.space/</a>, you are agreeing to be bound by these terms of service, all applicable laws, regulations, and agree that you are responsible for compliance with any applicable local laws. If you do not agree with any of these terms, you are prohibited from using or accessing this site. The materials contained in this website are protected by applicable copyright and trademark law.
                         </p>
                     </section>
 

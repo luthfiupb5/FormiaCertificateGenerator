@@ -131,8 +131,8 @@ export default function DashboardPage() {
             {/* Dashboard Header */}
             <header className="fixed top-0 w-full h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/50 backdrop-blur-xl z-50">
                 <Link href="/" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white to-neutral-400 flex items-center justify-center text-black font-bold text-xl shadow-lg shadow-white/10 group-hover:scale-105 transition-transform">F</div>
-                    <span className="font-bold text-lg tracking-tight">Formia</span>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white to-neutral-400 flex items-center justify-center text-black font-bold text-xl shadow-lg shadow-white/10 group-hover:scale-105 transition-transform">L</div>
+                    <span className="font-bold text-lg tracking-tight">Leenox</span>
                 </Link>
                 <div className="flex items-center gap-6">
                     <div className="relative hidden md:block group">

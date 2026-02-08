@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://formia.luthfibassam.space'; // Update with actual domain
+    const baseUrl = 'https://leenox.luthfibassam.space'; // Update with actual domain
 
     return [
         {

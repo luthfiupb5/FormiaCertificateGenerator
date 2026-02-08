@@ -1,5 +1,5 @@
 {
-  "name": "formia-web",
+  "name": "leenox-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,6 +13,7 @@
     "@aws-sdk/s3-request-presigner": "^3.975.0",
     "@gsap/react": "^2.1.2",
     "@pdf-lib/fontkit": "^1.1.1",
+    "@studio-freight/react-lenis": "^0.0.47",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",
     "@types/jszip": "^3.4.0",
@@ -31,6 +32,7 @@
     "react-dom": "19.2.3",
     "react-dropzone": "^14.3.8",
     "react-konva": "^19.2.1",
+    "sass": "^1.97.3",
     "use-image": "^1.1.4",
     "uuid": "^13.0.0",
     "xlsx": "^0.18.5",

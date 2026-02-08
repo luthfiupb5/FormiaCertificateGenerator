@@ -2,11 +2,11 @@ export default function JsonLd() {
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'SoftwareApplication',
-        name: 'Formia',
+        name: 'Leenox',
         operatingSystem: 'Web',
         applicationCategory: 'DesignApplication',
         description: 'Design certificates, map your data, and generate thousands of PDFs in seconds.',
-        url: 'https://formia.luthfibassam.space',
+        url: 'https://leenox.luthfibassam.space',
         author: {
             '@type': 'Person',
             name: 'Luthfi Bassam U P',
@@ -17,7 +17,7 @@ export default function JsonLd() {
             priceCurrency: 'USD',
         },
         featureList: 'Certificate Design, Bulk PDF Generation, Data Mapping, Cloud Storage',
-        screenshot: 'https://formia.luthfibassam.space/og-image.png',
+        screenshot: 'https://leenox.luthfibassam.space/og-image.png',
     };
 
     return (

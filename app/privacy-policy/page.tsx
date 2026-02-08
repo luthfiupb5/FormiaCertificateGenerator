@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
 
                 <div className="space-y-8 text-lg leading-relaxed">
                     <p>
-                        Your privacy is important to us. It is Luthfi Bassam U P's policy to respect your privacy regarding any information we may collect from you across our website, <a href="https://formia.luthfibassam.space/" className="text-blue-400 hover:text-blue-300 underline underline-offset-4">https://formia.luthfibassam.space/</a>, and other sites we own and operate.
+                        Your privacy is important to us. It is Luthfi Bassam U P's policy to respect your privacy regarding any information we may collect from you across our website, <a href="https://leenox.luthfibassam.space/" className="text-blue-400 hover:text-blue-300 underline underline-offset-4">https://leenox.luthfibassam.space/</a>, and other sites we own and operate.
                     </p>
 
                     <p>

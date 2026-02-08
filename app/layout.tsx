@@ -26,56 +26,56 @@ const satoshi = localFont({
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://formia.luthfibassam.space'), // Updated with actual domain
+  metadataBase: new URL('https://leenox.watermelonbranding.in'),
   title: {
-    default: 'Formia - Certificate Generator',
-    template: '%s | Formia',
+    default: 'Leenox | Free Bulk Certificate Generator & Design Tool',
+    template: '%s | Leenox',
   },
-  description: 'Design certificates, map your data, and generate thousands of PDFs in seconds. The ultimate tool for bulk creativity.',
+  description: 'The fastest way to generate thousands of certificates. Drag & drop CSV/Excel, design with our visual editor, and export PDF/JPG in seconds. No signup required for basic use.',
   keywords: [
-    // Core Functionality
-    'Certificate Generator', 'Bulk PDF Generator', 'Certificate Maker', 'Diploma Creator', 'Award Generator',
-    'Mass Certificate Generation', 'Automated Certificates', 'Dynamic PDF Creation', 'Bulk Document Automation',
+    // Core Primary
+    'Certificate Generator', 'Bulk Certificate Maker', 'Certificate Design Tool', 'Free Certificate Creator', 'Award Generator', 'Diploma Maker',
 
-    // Features
-    'Data Mapping', 'CSV Import', 'Excel to PDF', 'No-code Design Tool', 'Drag and Drop Editor',
-    'High Resolution PDF', 'Print Ready Certificates', 'Digital Credentials', 'E-Certificates',
-    'Cloud Storage', 'Real-time Preview', 'Template Library', 'Custom Fonts',
+    // Feature Specific
+    'Bulk PDF Generation', 'CSV to Certificate', 'Excel to PDF Certificate', 'Google Sheets to Certificate', 'Mail Merge Certificates',
+    'Dynamic Image Insertion', 'QR Code Certificate', 'Custom Fonts Certificate', 'High Resolution PDF Export',
 
-    // Use Cases
-    'Webinar Certificates', 'Course Completion Certificates', 'Workshop Awards', 'Employee Recognition',
-    'Hackathon Certificates', 'Event Participation', 'Training Certifications', 'School Diplomas',
-    'Professional Licensing', 'Membership Cards', 'Badge Generator',
+    // Usage / Intent
+    'Generate certificates in bulk free', 'Automate certificate issuance', 'Mass create credentials', 'Digital badges maker',
+    'Print ready certificate generator', 'No-code certificate tool',
 
-    // Marketing / Descriptive
-    'Free Certificate Maker', 'Online Certificate Tool', 'Best Certificate Generator', 'Fastest PDF Engine',
-    'Premium Design', 'Professional Templates', 'Instant Export', 'Secure Certificate Platform',
-    'Design Certificates Online', 'Generate Certificates Free'
+    // Audience / Niche
+    'Certificates for webinars', 'Course completion certificates', 'Workshop participant certificates',
+    'Employee recognition awards', 'Hackathon participation certificates', 'School achievement certificates',
+    'Sports participation awards', 'Volunteer appreciation certificates',
+
+    // Tech / Platform
+    'Online certificate maker', 'Browser based certificate tool', 'Secure certificate generation', 'Cloud certificate storage'
   ],
   authors: [{ name: 'Luthfi Bassam U P' }],
-  creator: 'Luthfi Bassam U P',
+  creator: 'Leenox Team',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://formia.luthfibassam.space',
-    title: 'Formia - Certificate Generator',
-    description: 'Design certificates, map your data, and generate thousands of PDFs in seconds.',
-    siteName: 'Formia',
+    url: 'https://leenox.watermelonbranding.in',
+    title: 'Leenox - Bulk Certificate Generator',
+    description: 'Design, map data, and generate 1000s of certificates in seconds. The professional choice for event organizers and educators.',
+    siteName: 'Leenox',
     images: [
       {
-        url: '/og-image.png', // Ensure this image exists in public folder
+        url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Formia - Certificate Generator',
+        alt: 'Leenox Interface Preview',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Formia - Certificate Generator',
-    description: 'Design certificates, map your data, and generate thousands of PDFs in seconds.',
-    images: ['/og-image.png'], // Ensure this image exists in public folder
-    creator: '@luthfi_bassam', // Replace with actual handle if known
+    title: 'Leenox - Bulk Certificate Engine',
+    description: 'Stop using mail merge. Use Leenox to generate beautiful certificates at warp speed.',
+    images: ['/og-image.png'],
+    creator: '@luthfi_bassam',
   },
   robots: {
     index: true,
@@ -91,9 +91,13 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png', // Ensure this exists or use favicon
+    apple: '/apple-touch-icon.png',
   },
 };
+
+import SmoothScroll from '@/components/SmoothScroll';
+import InteractiveBackground from '@/components/InteractiveBackground';
+import CustomCursor from '@/components/CustomCursor';
 
 export default function RootLayout({
   children,
@@ -105,9 +109,13 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${satoshi.variable} font-sans antialiased`}
       >
-        <JsonLd />
-        {children}
-        <Analytics />
+        <SmoothScroll>
+          <CustomCursor />
+          <InteractiveBackground />
+          <JsonLd />
+          {children}
+          <Analytics />
+        </SmoothScroll>
       </body>
     </html>
   );
