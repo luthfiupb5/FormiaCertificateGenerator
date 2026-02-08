@@ -44,7 +44,7 @@ export default function InteractiveBackground() {
                 this.baseY = y;
                 this.size = Math.random() * 2 + 1; // Random size
                 this.density = Math.random() * 30 + 1; // Random density for movement
-                this.color = `rgba(255, 255, 255, ${Math.random() * 0.15 + 0.05})`; // Subtle white opacity
+                this.color = `rgba(${Math.random() > 0.5 ? '255, 255, 255' : '167, 139, 250'}, ${Math.random() * 0.15 + 0.05})`; // Mix of white and violet
             }
 
             draw() {
@@ -145,10 +145,15 @@ export default function InteractiveBackground() {
     }, []);
 
     return (
-        <canvas
-            ref={canvasRef}
-            className="fixed inset-0 z-[-1] pointer-events-none bg-[#050505]"
-        // z-[-1] putting it behind everything
-        />
+        <>
+            <div className="fixed inset-0 z-[-2] bg-[#050505]">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/20 via-[#050505] to-[#050505]"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-violet-900/10 via-transparent to-transparent"></div>
+            </div>
+            <canvas
+                ref={canvasRef}
+                className="fixed inset-0 z-[-1] pointer-events-none"
+            />
+        </>
     );
 }
