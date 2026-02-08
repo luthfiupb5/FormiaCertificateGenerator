@@ -1,13 +1,13 @@
-# Leenox - The Ultimate Bulk Certificate Generator 🚀
+# Korae - The Ultimate Bulk Certificate Generator 🚀
 
-[![Leenox](https://img.shields.io/badge/Leenox-2.0-violet?style=for-the-badge&logo=rocket)](https://leenox.watermelonbranding.in)
+[![Korae](https://img.shields.io/badge/Korae-2.0-violet?style=for-the-badge&logo=rocket)](https://korae.watermelonbranding.in)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-green?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-blue?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 
-**Leenox** is a high-performance, browser-based tool designed to solve the pain of bulk certificate generation. Forget mail merge and clunky software. Leenox lets you design beautiful certificates visually, map data from CSV/Excel, and generate thousands of print-ready PDFs in seconds—all directly in your browser.
+**Korae** is a high-performance, browser-based tool designed to solve the pain of bulk certificate generation. Forget mail merge and clunky software. Korae lets you design beautiful certificates visually, map data from CSV/Excel, and generate thousands of print-ready PDFs in seconds—all directly in your browser.
 
-🌐 **Live Demo:** [leenox.watermelonbranding.in](https://leenox.watermelonbranding.in)
+🌐 **Live Demo:** [korae.watermelonbranding.in](https://korae.watermelonbranding.in)
 
 ---
 
@@ -57,8 +57,8 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/leenox.git
-   cd leenox
+   git clone https://github.com/yourusername/korae.git
+   cd korae
    ```
 
 2. **Install dependencies**

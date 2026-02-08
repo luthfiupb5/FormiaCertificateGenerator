@@ -141,9 +141,9 @@ export default function Editor() {
                 <div className="flex items-center gap-3 pl-2">
                     <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white font-bold font-heading text-xs shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform">
-                            L
+                            K
                         </div>
-                        <h1 className="text-sm font-bold font-heading tracking-tight text-white/90">Leenox</h1>
+                        <h1 className="text-sm font-bold font-heading tracking-tight text-white/90">Korae</h1>
                     </Link>
 
                     <div className="h-4 w-px bg-white/10 mx-1" />

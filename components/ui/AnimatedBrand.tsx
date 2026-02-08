@@ -6,7 +6,7 @@ import { useGSAP } from '@gsap/react';
 
 export default function AnimatedBrand() {
     const container = useRef<HTMLSpanElement>(null);
-    const text = "Leenox";
+    const text = "Korae";
     const letters = text.split("");
 
     useGSAP(() => {

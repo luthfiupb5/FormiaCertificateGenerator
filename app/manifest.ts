@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Leenox - Certificate Generator',
-        short_name: 'Leenox',
+        name: 'Korae - Certificate Generator',
+        short_name: 'Korae',
         description: 'Design certificates, map your data, and generate thousands of PDFs in seconds. The ultimate tool for bulk creativity.',
         start_url: '/',
         display: 'standalone',

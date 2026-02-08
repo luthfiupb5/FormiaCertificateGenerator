@@ -26,10 +26,10 @@ const satoshi = localFont({
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://leenox.watermelonbranding.in'),
+  metadataBase: new URL('https://korae.watermelonbranding.in'),
   title: {
-    default: 'Leenox | Free Bulk Certificate Generator & Design Tool',
-    template: '%s | Leenox',
+    default: 'Korae | Free Bulk Certificate Generator & Design Tool',
+    template: '%s | Korae',
   },
   description: 'The fastest way to generate thousands of certificates. Drag & drop CSV/Excel, design with our visual editor, and export PDF/JPG in seconds. No signup required for basic use.',
   keywords: [
@@ -53,27 +53,27 @@ export const metadata: Metadata = {
     'Online certificate maker', 'Browser based certificate tool', 'Secure certificate generation', 'Cloud certificate storage'
   ],
   authors: [{ name: 'Luthfi Bassam U P' }],
-  creator: 'Leenox Team',
+  creator: 'Korae Team',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://leenox.watermelonbranding.in',
-    title: 'Leenox - Bulk Certificate Generator',
+    url: 'https://korae.watermelonbranding.in',
+    title: 'Korae - Bulk Certificate Generator',
     description: 'Design, map data, and generate 1000s of certificates in seconds. The professional choice for event organizers and educators.',
-    siteName: 'Leenox',
+    siteName: 'Korae',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Leenox Interface Preview',
+        alt: 'Korae Interface Preview',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Leenox - Bulk Certificate Engine',
-    description: 'Stop using mail merge. Use Leenox to generate beautiful certificates at warp speed.',
+    title: 'Korae - Bulk Certificate Engine',
+    description: 'Stop using mail merge. Use Korae to generate beautiful certificates at warp speed.',
     images: ['/og-image.png'],
     creator: '@luthfi_bassam',
   },

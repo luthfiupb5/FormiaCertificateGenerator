@@ -60,8 +60,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-6 md:px-12 pointer-events-none">
         <div className="pointer-events-auto">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-sm">L</div>
-            <span className="font-heading font-bold text-lg tracking-tight">Leenox</span>
+            <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-sm">K</div>
+            <span className="font-heading font-bold text-lg tracking-tight">Korae</span>
           </Link>
         </div>
 
@@ -92,7 +92,7 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
             </span>
-            <span>LEENOX 2.0 IS LIVE</span>
+            <span>KORAE 2.0 IS LIVE</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-9xl font-heading font-bold tracking-tighter leading-[1.05] mb-8 reveal-text">
@@ -133,11 +133,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Problem vs Solution (Why Leenox) */}
+      {/* Problem vs Solution (Why Korae) */}
       <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto reveal-section">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">Stop the <span className="text-red-400 line-through">Spreadsheet Hell</span>.</h2>
-          <p className="text-neutral-400 text-lg max-w-2xl mx-auto">Manual mail merges are prone to errors, slow, and frustrating. Leenox makes it instant and pixel-perfect.</p>
+          <p className="text-neutral-400 text-lg max-w-2xl mx-auto">Manual mail merges are prone to errors, slow, and frustrating. Korae makes it instant and pixel-perfect.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -152,7 +152,7 @@ export default function LandingPage() {
           </div>
           <div className="p-8 rounded-3xl bg-green-500/5 border border-green-500/10 relative overflow-hidden">
             <div className="absolute inset-0 bg-green-500/5 blur-3xl"></div>
-            <h3 className="text-xl font-bold text-green-200 mb-4 flex items-center gap-2 relative z-10"><Zap className="w-5 h-5" /> The Leenox Way</h3>
+            <h3 className="text-xl font-bold text-green-200 mb-4 flex items-center gap-2 relative z-10"><Zap className="w-5 h-5" /> The Korae Way</h3>
             <ul className="space-y-3 text-neutral-300 relative z-10">
               <li className="flex gap-2">✅ Visual Drag & Drop Editor</li>
               <li className="flex gap-2">✅ Instant CSV/Excel Mapping</li>
@@ -174,7 +174,7 @@ export default function LandingPage() {
             {[
               { title: "1. Upload Data", desc: "Drag and drop your CSV or Excel file containing recipient names, dates, and details.", icon: "📂" },
               { title: "2. Design Template", desc: "Use our visual editor to place text, images, and QR codes. Map columns to layers.", icon: "🎨" },
-              { title: "3. Bulk Export", desc: "Click generate and watch Leenox create thousands of personalized PDFs in seconds.", icon: "🚀" }
+              { title: "3. Bulk Export", desc: "Click generate and watch Korae create thousands of personalized PDFs in seconds.", icon: "🚀" }
             ].map((step, i) => (
               <div key={i} className="group p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 hover:border-violet-500/50 transition-colors reveal-section">
                 <div className="text-4xl mb-6 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">{step.icon}</div>
@@ -253,11 +253,11 @@ export default function LandingPage() {
         <h2 className="text-3xl font-bold mb-12 text-center">Frequently Asked Questions</h2>
         <div className="space-y-6">
           {[
-            { q: "Is Leenox free to use?", a: "Yes! Leenox offers a generous free tier for individuals. You can design and export certificates without a credit card." },
+            { q: "Is Korae free to use?", a: "Yes! Korae offers a generous free tier for individuals. You can design and export certificates without a credit card." },
             { q: "Can I use my own certificate template?", a: "Absolutely. You can upload any JPG or PNG image as your base template and overlay text on top of it." },
             { q: "How many certificates can I generate at once?", a: "Our engine is tested with up to 10,000 records in a single batch. It handles large datasets with ease." },
             { q: "Is my data secure?", a: "We prioritize security. Your CSV data is processed securely and we do not sell your recipient data to third parties." },
-            { q: "Does it support different languages?", a: "Yes, Leenox supports UTF-8 characters so you can generate certificates in virtually any language." }
+            { q: "Does it support different languages?", a: "Yes, Korae supports UTF-8 characters so you can generate certificates in virtually any language." }
           ].map((faq, i) => (
             <div key={i} className="border-b border-white/10 pb-6">
               <h3 className="font-bold text-lg mb-2">{faq.q}</h3>
@@ -286,11 +286,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs">L</div>
-              <span className="font-heading font-bold text-xl">Leenox</span>
+              <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs">K</div>
+              <span className="font-heading font-bold text-xl">Korae</span>
             </div>
             <p className="text-neutral-500 max-w-sm mb-6">
-              Leenox is the premier online tool for bulk certificate generation. We help educators, HR professionals, and event organizers automate their workflow with pixel-perfect design tools.
+              Korae is the premier online tool for bulk certificate generation. We help educators, HR professionals, and event organizers automate their workflow with pixel-perfect design tools.
             </p>
             <div className="flex gap-4 text-neutral-400">
               <a href="#" className="hover:text-white">Twitter</a>
@@ -315,12 +315,12 @@ export default function LandingPage() {
               <li><Link href="/legal/privacy" className="hover:text-white">Privacy Policy</Link></li>
               <li><Link href="/legal/terms" className="hover:text-white">Terms of Service</Link></li>
               <li><Link href="/legal/cookies" className="hover:text-white">Cookie Policy</Link></li>
-              <li><Link href="mailto:support@leenox.io" className="hover:text-white">Contact Support</Link></li>
+              <li><Link href="mailto:support@korae.io" className="hover:text-white">Contact Support</Link></li>
             </ul>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 md:px-12 mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between text-neutral-600 text-xs">
-          <p>© 2026 Leenox. All rights reserved.</p>
+          <p>© 2026 Korae. All rights reserved.</p>
           <p>Made with ❤️ for the community.</p>
         </div>
       </footer>

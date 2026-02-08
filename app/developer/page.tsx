@@ -43,7 +43,7 @@ export default function DeveloperPage() {
                             I believe in creating software that feels <span className="text-white">alive</span>—tools that don't just function, but anticipate and adapt.
                         </p>
                         <p>
-                            Leenox is a testament to this philosophy. Driven by AI thinking, built for scale, and designed for those who value craftsmanship.
+                            Korae is a testament to this philosophy. Driven by AI thinking, built for scale, and designed for those who value craftsmanship.
                         </p>
                     </div>
 

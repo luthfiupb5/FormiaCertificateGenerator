@@ -31,13 +31,13 @@ export default function OurProductsPage() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                    {/* Leenox */}
+                    {/* Korae */}
                     <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                         <ProductCard
-                            title="Leenox"
+                            title="Korae"
                             description="The ultimate certificate generation tool. Design templates, map CSV data, and generate thousands of certificates in seconds. Built for speed and scale."
                             icon={<PenTool className="w-7 h-7" />}
-                            href="https://leenox.luthfibassam.space"
+                            href="https://korae.watermelonbranding.in"
                             color="violet"
                             isExternal={true}
                         />
