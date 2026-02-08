@@ -216,43 +216,125 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Main Features Grid (Detailed) */}
-      <section id="features" className="py-24 px-6 md:px-12 max-w-7xl mx-auto reveal-section">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">Everything needed for<br />Professional Issuance.</h2>
+      {/* Main Features Vertical Layout */}
+      <section id="features" className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="text-center mb-24">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6">Built for <span className="text-violet-400">Scale & Precision.</span></h2>
+          <p className="text-neutral-400 text-lg max-w-2xl mx-auto">Every tool you need to manage thousands of certificates without breaking a sweat.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[300px]">
-          {/* Large Card 1 */}
-          <div className="p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 col-span-1 md:col-span-2 row-span-1 hover:border-white/20 transition-colors relative overflow-hidden group">
-            <Layers className="mb-4 text-violet-400 w-8 h-8" />
-            <h4 className="text-2xl font-bold mb-2">Advanced Layer Management</h4>
-            <p className="text-neutral-400 max-w-sm">Organize your design with precision tools. Lock, hide, and reorder layers just like specialized design software.</p>
-            <div className="absolute right-0 top-0 w-2/3 h-full bg-gradient-to-l from-violet-900/20 to-transparent group-hover:from-violet-900/30 transition-colors"></div>
-            {/* Mock UI Element */}
-            <div className="absolute right-8 bottom-8 w-48 h-32 bg-white/5 rounded-lg border border-white/10 backdrop-blur-md transform rotate-3 transition-transform group-hover:rotate-0"></div>
+        <div className="space-y-24">
+          {/* Feature 1: Layer Management */}
+          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24 reveal-section">
+            <div className="flex-1 order-2 md:order-1">
+              <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-400 mb-6">
+                <Layers className="w-8 h-8" />
+              </div>
+              <h3 className="text-3xl font-bold mb-4">Advanced Layer Management</h3>
+              <p className="text-neutral-400 text-lg leading-relaxed mb-6">
+                Organize your design with precision tools. Lock, hide, and reorder layers just like specialized design software.
+                Context-aware menus giving you full control over every element.
+              </p>
+            </div>
+            <div className="flex-1 order-1 md:order-2">
+              <div className="aspect-video rounded-3xl bg-[#0A0A0A] border border-white/10 relative overflow-hidden group hover:border-violet-500/30 transition-colors shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/5 to-transparent"></div>
+                {/* Mock UI for Layers */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-white/5 backdrop-blur-md rounded-l-xl border-l border-y border-white/10 p-4 space-y-3 shadow-xl">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-12 w-full bg-white/5 rounded-lg border border-white/5 flex items-center px-4 gap-3">
+                      <div className="w-4 h-4 rounded bg-white/20"></div>
+                      <div className="h-2 w-24 bg-white/20 rounded"></div>
+                      <div className="ml-auto w-4 h-4 rounded-full border border-white/20"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Small Card 1 */}
-          <div className="p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 hover:border-white/20 transition-colors flex flex-col justify-end">
-            <Zap className="mb-4 text-yellow-400 w-8 h-8" />
-            <h4 className="text-xl font-bold mb-2">Instant Rendering</h4>
-            <p className="text-neutral-400 text-sm">Our engine renders 100+ pages per second locally in your browser.</p>
+          {/* Feature 2: Instant Rendering */}
+          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24 reveal-section">
+            <div className="flex-1">
+              <div className="aspect-video rounded-3xl bg-[#0A0A0A] border border-white/10 relative overflow-hidden group hover:border-yellow-500/30 transition-colors shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-bl from-yellow-500/5 to-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 rounded-full bg-yellow-500/10 blur-3xl animate-pulse"></div>
+                  <div className="relative z-10 bg-black/50 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full flex items-center gap-4">
+                    <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
+                    <span className="font-mono text-sm text-green-400">Rendering: 120fps</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-400 mb-6">
+                <Zap className="w-8 h-8" />
+              </div>
+              <h3 className="text-3xl font-bold mb-4">Instant Rendering Engine</h3>
+              <p className="text-neutral-400 text-lg leading-relaxed mb-6">
+                Don't wait hours for generation. Our local-first engine renders 100+ pages per second directly in your browser.
+                No server queues, no privacy risks.
+              </p>
+            </div>
           </div>
 
-          {/* Small Card 2 */}
-          <div className="p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 hover:border-white/20 transition-colors flex flex-col justify-end">
-            <Globe className="mb-4 text-blue-400 w-8 h-8" />
-            <h4 className="text-xl font-bold mb-2">Anywhere Access</h4>
-            <p className="text-neutral-400 text-sm">Your templates and data are synced safely to the cloud.</p>
+          {/* Feature 3: Print Ready */}
+          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24 reveal-section">
+            <div className="flex-1 order-2 md:order-1">
+              <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400 mb-6">
+                <Download className="w-8 h-8" />
+              </div>
+              <h3 className="text-3xl font-bold mb-4">High-Res Print Ready</h3>
+              <p className="text-neutral-400 text-lg leading-relaxed mb-6">
+                Export as CMYK-compatible PDFs or high-quality PNGs suitable for professional printing.
+                We ensure your fonts and vectors stay crisp at any size.
+              </p>
+            </div>
+            <div className="flex-1 order-1 md:order-2">
+              <div className="aspect-video rounded-3xl bg-[#0A0A0A] border border-white/10 relative overflow-hidden group hover:border-green-500/30 transition-colors shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"></div>
+                <div className="absolute bottom-8 left-8 right-8 flex gap-4">
+                  <div className="h-16 w-1/3 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center flex-col">
+                    <span className="text-xs text-neutral-500 mb-1">Format</span>
+                    <span className="font-bold text-white">PDF</span>
+                  </div>
+                  <div className="h-16 w-1/3 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center flex-col">
+                    <span className="text-xs text-neutral-500 mb-1">DPI</span>
+                    <span className="font-bold text-white">300</span>
+                  </div>
+                  <div className="h-16 w-1/3 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center flex-col">
+                    <span className="text-xs text-neutral-500 mb-1">Color</span>
+                    <span className="font-bold text-white">CMYK</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Large Card 2 */}
-          <div className="p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 col-span-1 md:col-span-2 hover:border-white/20 transition-colors relative overflow-hidden group">
-            <Download className="mb-4 text-green-400 w-8 h-8" />
-            <h4 className="text-2xl font-bold mb-2">High-Res Print Ready</h4>
-            <p className="text-neutral-400 max-w-sm">Export as CMYK-compatible PDFs or high-quality PNGs suitable for professional printing.</p>
-            <div className="absolute right-0 bottom-0 w-1/2 h-full bg-gradient-to-t from-green-900/20 to-transparent group-hover:from-green-900/30 transition-colors"></div>
+          {/* Feature 4: Cloud Sync */}
+          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24 reveal-section">
+            <div className="flex-1">
+              <div className="aspect-video rounded-3xl bg-[#0A0A0A] border border-white/10 relative overflow-hidden group hover:border-blue-500/30 transition-colors shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 to-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full border-2 border-blue-500/30 flex items-center justify-center relative">
+                    <div className="absolute inset-0 rounded-full border border-blue-500/50 animate-ping"></div>
+                    <Globe className="w-8 h-8 text-blue-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6">
+                <Globe className="w-8 h-8" />
+              </div>
+              <h3 className="text-3xl font-bold mb-4">Anywhere Access</h3>
+              <p className="text-neutral-400 text-lg leading-relaxed mb-6">
+                Your templates and data are synced safely to the cloud. Access your projects from any device, anywhere in the world.
+                Everything is backed up instantly.
+              </p>
+            </div>
           </div>
         </div>
       </section>
