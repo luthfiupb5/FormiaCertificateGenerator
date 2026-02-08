@@ -134,46 +134,30 @@ export default function LandingPage() {
       </section>
 
       {/* Templates Marquee (New Premium Section) */}
-      <section className="py-24 overflow-hidden bg-[#050505]">
+      {/* Design Integrations (Replacement for Templates) */}
+      <section className="py-24 overflow-hidden bg-[#050505] border-y border-white/5">
         <div className="max-w-7xl mx-auto px-6 md:px-12 mb-12 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">Stunning Templates. <span className="text-violet-400">Ready to Go.</span></h2>
-          <p className="text-neutral-400 text-lg">Choose from professional designs or build your own from scratch.</p>
+          <h2 className="text-3xl md:text-5xl font-bold mb-6">Design Anywhere. <span className="text-violet-400">Generate Here.</span></h2>
+          <p className="text-neutral-400 text-lg">Compatible with exports from your favorite design tools. Just upload your background.</p>
         </div>
 
         <div className="relative w-full">
           <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none"></div>
           <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none"></div>
 
-          <div className="flex animate-scroll w-[200%] gap-8">
-            {[...Array(8)].flatMap((_, i) => [
-              { color: "from-violet-500/20 to-blue-500/20", title: "Modern Diploma", type: "Education" },
-              { color: "from-emerald-500/20 to-teal-500/20", title: "Course Completion", type: "Training" },
-              { color: "from-orange-500/20 to-red-500/20", title: "Appreciation", type: "HR" },
-              { color: "from-pink-500/20 to-rose-500/20", title: "Event Badge", type: "Conference" },
-              { color: "from-blue-500/20 to-cyan-500/20", title: "Tech Certificate", type: "Hackathon" },
-              { color: "from-purple-500/20 to-indigo-500/20", title: "Achievement", type: "Sports" },
-            ]).map((template, i) => (
-              <div key={i} className="flex-shrink-0 w-[400px] h-[280px] rounded-xl bg-neutral-900/50 border border-white/10 p-6 flex flex-col justify-between hover:border-violet-500/50 transition-colors group relative overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${template.color} opacity-20 group-hover:opacity-30 transition-opacity`}></div>
-
-                {/* Mock Certificate Layout */}
-                <div className="relative z-10 opacity-70 group-hover:opacity-100 transition-opacity">
-                  <div className="w-16 h-16 rounded-full bg-white/10 mb-4 mx-auto backdrop-blur-md"></div>
-                  <div className="h-6 w-3/4 bg-white/20 mx-auto rounded my-2"></div>
-                  <div className="h-4 w-1/2 bg-white/10 mx-auto rounded"></div>
-                  <div className="mt-8 flex justify-between px-8">
-                    <div className="h-8 w-20 bg-white/10 rounded"></div>
-                    <div className="h-12 w-12 bg-white/10 rounded-lg"></div>
-                  </div>
-                </div>
-
-                <div className="relative z-10 flex justify-between items-center mt-4 border-t border-white/10 pt-4">
-                  <div>
-                    <h4 className="font-bold text-white">{template.title}</h4>
-                    <span className="text-xs text-neutral-500 uppercase tracking-wider">{template.type}</span>
-                  </div>
-                  <button className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white text-white hover:text-black text-xs font-bold transition-all">Use Template</button>
-                </div>
+          <div className="flex animate-scroll w-[200%] gap-8 items-center">
+            {[...Array(2)].flatMap(() => [
+              { name: "Canva", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+              { name: "Figma", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+              { name: "Adobe Illustrator", color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+              { name: "Adobe Photoshop", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+              { name: "PowerPoint", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20" },
+              { name: "Google Slides", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+              { name: "InDesign", color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+              { name: "Sketch", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+            ]).map((tool, i) => (
+              <div key={i} className={`flex-shrink-0 px-8 py-6 rounded-2xl ${tool.bg} ${tool.border} border flex items-center gap-4 min-w-[200px] justify-center hover:scale-105 transition-transform duration-300`}>
+                <span className={`text-xl font-bold ${tool.color}`}>{tool.name}</span>
               </div>
             ))}
           </div>
