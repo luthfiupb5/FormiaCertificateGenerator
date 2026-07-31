@@ -1,12 +1,9 @@
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
 import localFont from 'next/font/local';
 import { Analytics } from "@vercel/analytics/next"
 import './globals.css';
 import JsonLd from '@/components/JsonLd';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space' });
+import SmoothScroll from '@/components/SmoothScroll';
 
 const satoshi = localFont({
   src: [
@@ -21,7 +18,7 @@ const satoshi = localFont({
     { path: '../public/assets/Satoshi-BoldItalic.otf', weight: '700', style: 'italic' },
     { path: '../public/assets/Satoshi-BlackItalic.otf', weight: '900', style: 'italic' },
   ],
-  variable: '--font-jakarta' // Keeping same variable name to avoid breaking tailwind config
+  variable: '--font-satoshi'
 });
 
 
@@ -95,9 +92,6 @@ export const metadata: Metadata = {
   },
 };
 
-import SmoothScroll from '@/components/SmoothScroll';
-import InteractiveBackground from '@/components/InteractiveBackground';
-import CustomCursor from '@/components/CustomCursor';
 
 export default function RootLayout({
   children,
@@ -105,13 +99,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={satoshi.variable}>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${satoshi.variable} font-sans antialiased`}
+        className="font-sans antialiased text-slate-900 bg-white"
       >
         <SmoothScroll>
-          <CustomCursor />
-          <InteractiveBackground />
           <JsonLd />
           {children}
           <Analytics />

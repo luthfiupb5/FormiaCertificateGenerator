@@ -33,7 +33,7 @@ const formatDate = (dateString: string) => {
 
 export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
     return (
-        <div className="group relative bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/30 transition-all duration-500 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] hover:-translate-y-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+        <div className="group relative bg-white backdrop-blur-md border border-slate-200 rounded-2xl overflow-hidden hover:border-violet-500/30 transition-all duration-500 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] hover:-translate-y-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
             {/* Thumbnail Area */}
             <Link href={`/canvas?id=${project.id}`} className="block aspect-[4/3] bg-neutral-900 relative overflow-hidden">
                 {project.thumbnail_url ? (
@@ -45,26 +45,26 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-900">
                         {/* Abstract placeholder */}
-                        <div className="w-16 h-20 border-2 border-white/10 rounded opacity-20 transform rotate-12 group-hover:rotate-6 transition-transform decoration-clone" />
+                        <div className="w-16 h-20 border-2 border-slate-200 rounded opacity-20 transform rotate-12 group-hover:rotate-6 transition-transform decoration-clone" />
                     </div>
                 )}
 
                 {/* Overlay on Hover */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
-                    <span className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full font-medium text-sm transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                    <span className="flex items-center gap-2 bg-indigo-600 text-slate-900 px-4 py-2 rounded-full font-medium text-sm transform translate-y-2 group-hover:translate-y-0 transition-transform">
                         <Edit className="w-4 h-4" /> Edit
                     </span>
                 </div>
             </Link>
 
             {/* Content Area */}
-            <div className="p-4 bg-black/40 relative z-10 border-t border-white/5">
+            <div className="p-4 bg-white relative z-10 border-t border-slate-100">
                 <div className="flex justify-between items-start gap-2">
                     <Link href={`/canvas?id=${project.id}`} className="block flex-1 min-w-0">
-                        <h3 className="font-semibold text-white truncate group-hover:text-primary transition-colors" title={project.name}>
+                        <h3 className="font-semibold text-slate-900 truncate group-hover:text-primary transition-colors" title={project.name}>
                             {project.name}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                             <Clock className="w-3 h-3" />
                             <span>Edited {formatDate(project.updated_at)}</span>
                         </div>
@@ -76,7 +76,7 @@ export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
                             e.preventDefault();
                             onDelete?.(project.id);
                         }}
-                        className="text-neutral-500 hover:text-red-400 p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                        className="text-slate-500 hover:text-red-400 p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
                         title="Delete Project"
                     >
                         <Trash2 className="w-4 h-4" />

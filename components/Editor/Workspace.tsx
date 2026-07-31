@@ -11,9 +11,10 @@ import { GOOGLE_FONTS } from '@/lib/fonts';
 import clsx from 'clsx';
 import { useCanvasStore } from '@/lib/store';
 import { v4 as uuidv4 } from 'uuid';
+import SidebarPanel from './SidebarPanel';
+import RowCarouselBar from './RowCarouselBar';
+import PropertiesPanel from './PropertiesPanel';
 import ExportModal, { ExportConfig } from './ExportModal';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 interface WorkspaceProps {
     templateUrl: string;
@@ -23,11 +24,11 @@ interface WorkspaceProps {
     initialDataHeaders?: string[];
 }
 
-export default function Workspace({ templateUrl, originalFileName, initialProjectName, initialDataRows, initialDataHeaders }: WorkspaceProps) {
+export default function Workspace({ templateUrl: initialTemplateUrl, originalFileName, initialProjectName, initialDataRows, initialDataHeaders }: WorkspaceProps) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [projectName, setProjectName] = useState(initialProjectName || originalFileName || 'Untitled Project');
-    const router = useRouter();
+    const [currentTemplateUrl, setCurrentTemplateUrl] = useState<string>(initialTemplateUrl);
 
     // Global Store
     const {
@@ -35,6 +36,7 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         addNode,
         updateNode,
         selectedNodeId,
+        selectedNodeIds,
         selectNode,
         activeTool,
         setActiveTool,
@@ -42,7 +44,10 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         redo,
         past,
         future,
-        removeNode
+        removeNode,
+        duplicateNode,
+        moveNodeLayer,
+        setStage,
     } = useCanvasStore();
 
     // Derived State
@@ -69,20 +74,49 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         return mappingStatus;
     }, [nodes, dataHeaders]);
 
-    // Auto-prompt Data Upload ONLY if no data is present
-    useEffect(() => {
-        if (dataRows.length === 0) {
-            const timer = setTimeout(() => setShowDataUploader(true), 600);
-            return () => clearTimeout(timer);
+    const handleFitScreen = () => {
+        const bgNode = nodes.find(n => n.id === 'background-template');
+        if (!bgNode || !bgNode.width || !bgNode.height) {
+            setStage({ scale: 1, x: 0, y: 0 });
+            return;
         }
-    }, [dataRows.length]);
+
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+
+        const scaleX = (viewportW * 0.70) / bgNode.width;
+        const scaleY = (viewportH * 0.70) / bgNode.height;
+        const scale = Math.min(scaleX, scaleY, 1.2);
+
+        const x = (viewportW - bgNode.width * scale) / 2;
+        const y = (viewportH - bgNode.height * scale) / 2 - 20;
+
+        setStage({ scale, x, y });
+    };
+
+    const handleSelectTemplatePreset = (url: string, name: string) => {
+        setCurrentTemplateUrl(url);
+        // Replace background node
+        const bgNode = nodes.find(n => n.id === 'background-template');
+        if (bgNode) {
+            updateNode('background-template', { src: url });
+        } else {
+            addNode({
+                id: 'background-template',
+                type: 'image',
+                x: 0,
+                y: 0,
+                src: url,
+            });
+        }
+    };
 
     // Auto-save Effect
     useEffect(() => {
-        if (!selectedNodeId && nodes.length > 0) { // Simple trigger: save when not dragging/editing heavily, or use debounce
+        if (!selectedNodeId && nodes.length > 0) {
             const timer = setTimeout(() => {
                 handleSave();
-            }, 3000); // Auto-save after 3 seconds of inactivity
+            }, 3000);
             return () => clearTimeout(timer);
         }
     }, [nodes, selectedNodeId]);
@@ -90,7 +124,6 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
     // Helper for keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if typing in an input
             if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
             if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
@@ -104,17 +137,17 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
                 e.preventDefault();
                 redo();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
-                if (selectedNodeId) {
-                    // Prevent backspace from navigating back
+                if (selectedNodeId || selectedNodeIds.length > 0) {
                     e.preventDefault();
-                    removeNode(selectedNodeId);
+                    const targets = selectedNodeIds.length > 0 ? selectedNodeIds : (selectedNodeId ? [selectedNodeId] : []);
+                    targets.forEach(id => removeNode(id));
                     selectNode(null);
                 }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo]);
+    }, [undo, redo, selectedNodeId, selectedNodeIds]);
 
     const addText = (mappedColumn: string = '') => {
         const textValue = mappedColumn ? `{${mappedColumn}}` : 'Double click to edit';
@@ -122,7 +155,7 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         addNode({
             id,
             type: 'text',
-            x: 400, // Reasonable default
+            x: 400,
             y: 300,
             text: textValue,
             fontSize: 40,
@@ -149,8 +182,8 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
     };
 
     const handleExportClick = () => {
-        if (!templateUrl || dataRows.length === 0) {
-            alert('Please upload a template and data first.');
+        if (!currentTemplateUrl) {
+            alert('Please select a template first.');
             return;
         }
         setShowExportModal(true);
@@ -159,47 +192,37 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) {
-                alert('Please log in to save your project.');
-                setIsSaving(false);
-                return;
-            }
-            const params = new URLSearchParams(window.location.search);
-            const projectId = params.get('id') || uuidv4();
-
-            // Filter out background template node from save
             const nodesToSave = nodes.filter(n => n.id !== 'background-template');
 
             const projectData = {
-                id: projectId,
-                user_id: user.id,
                 name: projectName || 'Untitled Project',
-                canvas_data: nodesToSave,
-                updated_at: new Date().toISOString(),
+                templateUrl: currentTemplateUrl,
+                templateOriginalName: originalFileName,
+                dataRows,
+                dataHeaders,
+                canvasNodes: nodesToSave,
+                updatedAt: new Date().toISOString(),
             };
 
-            const { error } = await supabase.from('projects').upsert(projectData).select();
-            if (error) throw error;
-            if (!params.get('id')) {
-                window.history.pushState({}, '', `?id=${projectId}`);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('korae_current_project', JSON.stringify(projectData));
             }
         } catch (e: any) {
-            console.error('Save failed:', e);
+            console.error('Save to local cache failed:', e);
         } finally {
             setIsSaving(false);
         }
     };
 
+    const [exportProgress, setExportProgress] = useState(0);
 
     const handleExportConfirm = async (config: ExportConfig) => {
         setIsProcessing(true);
+        setExportProgress(5);
         try {
             await generateCertificates({
-                templateUrl,
-                data: dataRows,
+                templateUrl: currentTemplateUrl,
+                data: dataRows.length > 0 ? dataRows : [{}],
                 mappings: {},
                 objects: nodes.map(n => ({
                     ...n,
@@ -210,14 +233,15 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
                 canvasWidth: nodes.find(n => n.id === 'background-template')?.width || 800,
                 canvasHeight: nodes.find(n => n.id === 'background-template')?.height || 600,
                 exportFormat: config.format,
-                exportStructure: config.structure
+                exportStructure: config.structure,
+                onProgress: (pct) => {
+                    setExportProgress(pct);
+                }
             });
-            alert('Certificates generated successfully!');
-            setShowExportModal(false);
+            setExportProgress(100);
         } catch (e: any) {
             console.error(e);
             alert(`Failed to generate certificates: ${e.message}`);
-        } finally {
             setIsProcessing(false);
         }
     };
@@ -226,25 +250,25 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
         <div className="w-full h-full animate-in fade-in duration-500 relative flex pointer-events-none">
 
             {/* Top Floating Toolbar */}
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 flex gap-3 items-center pointer-events-auto">
-                <div className="flex bg-[#0A0A0A]/95 backdrop-blur-xl rounded-2xl p-1.5 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex gap-3 items-center pointer-events-auto">
+                <div className="flex bg-white/95 backdrop-blur-xl rounded-2xl p-1.5 border border-slate-200 shadow-xl ring-1 ring-slate-200/50">
                     <button
                         onClick={undo}
                         disabled={past.length === 0}
-                        className="p-2.5 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        title="Undo"
+                        className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Undo (Ctrl+Z)"
                     >
                         <Undo className="w-4 h-4" />
                     </button>
                     <button
                         onClick={redo}
                         disabled={future.length === 0}
-                        className="p-2.5 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        title="Redo"
+                        className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Redo (Ctrl+Y)"
                     >
                         <Redo className="w-4 h-4" />
                     </button>
-                    <div className="w-px bg-white/10 my-2 mx-1" />
+                    <div className="w-px bg-slate-200 my-2 mx-1" />
                     <button
                         onClick={() => {
                             if (selectedNodeId) {
@@ -252,247 +276,76 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
                                 selectNode(null);
                             }
                         }}
-                        disabled={!selectedNodeId}
-                        className="p-2.5 rounded-xl hover:bg-red-500/10 text-neutral-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        title="Delete"
+                        disabled={!selectedNodeId && selectedNodeIds.length === 0}
+                        className="p-2 rounded-xl hover:bg-red-50 text-slate-600 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Delete (Del)"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
-                    <div className="w-px bg-white/10 my-2 mx-1" />
+                    <div className="w-px bg-slate-200 my-2 mx-1" />
 
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="p-2.5 rounded-xl hover:bg-white/10 text-neutral-400 hover:text-violet-400 disabled:opacity-30 transition-colors"
-                        title="Save"
+                        className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-indigo-600 disabled:opacity-30 transition-colors"
+                        title="Save Project"
                     >
-                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> : <Save className="w-4 h-4" />}
                     </button>
 
                     <button
                         onClick={() => dataRows.length > 0 ? setShowDataPreview(!showDataPreview) : setShowDataUploader(true)}
                         className={clsx(
-                            "p-2.5 rounded-xl transition-all border border-transparent mx-1",
+                            "p-2 rounded-xl transition-all border border-transparent mx-1 flex items-center gap-1.5 text-xs font-semibold",
                             dataRows.length > 0
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : "hover:bg-white/10 text-neutral-400 hover:text-white"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
                         )}
-                        title="Upload Data"
+                        title="Upload Dataset"
                     >
                         <Database className="w-4 h-4" />
+                        <span className="hidden md:inline">{dataRows.length > 0 ? `${dataRows.length} Rows` : 'Upload Data'}</span>
                     </button>
 
                     <button
                         onClick={handleExportClick}
                         disabled={isProcessing}
-                        className="ml-2 px-6 py-2 rounded-xl bg-white text-black text-sm font-bold hover:bg-neutral-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                        className="ml-2 px-5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors shadow-md flex items-center gap-2"
                     >
-                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Export"}
+                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Export Certificates"}
                     </button>
                 </div>
             </div>
 
-            {/* LEFT SIDEBAR: Tools & Data Fields */}
-            <div className="absolute top-28 left-6 flex flex-col gap-4 z-10 h-[calc(100%-8rem)] w-64 pointer-events-none">
-                {/* Tools */}
-                <div className="glass-panel p-2 rounded-2xl flex flex-col gap-2 pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-16 items-center animate-in slide-in-from-left-4 fade-in duration-500 bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 ring-1 ring-white/5">
-                    <button
-                        onClick={() => {
-                            selectNode(null);
-                            setActiveTool('select');
-                        }}
-                        className={clsx(
-                            "w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200",
-                            activeTool === 'select' && !selectedNode ? "bg-white text-black shadow-lg" : "hover:bg-white/10 text-neutral-500 hover:text-white"
-                        )}
-                        title="Select Tool"
-                    >
-                        <MousePointer2 className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => {
-                            selectNode(null);
-                            setActiveTool(activeTool === 'text' ? 'select' : 'text');
-                        }}
-                        className={clsx(
-                            "w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200",
-                            activeTool === 'text' ? "bg-white text-black shadow-lg" : "hover:bg-white/10 text-neutral-500 hover:text-white"
-                        )}
-                        title="Draw Text Tool"
-                    >
-                        <Type className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Data Fields Panel */}
-                {dataHeaders.length > 0 && (
-                    <div className="glass-panel rounded-2xl overflow-hidden pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full flex flex-col animate-in slide-in-from-left-4 fade-in duration-500 delay-100 max-h-[50vh] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 ring-1 ring-white/5">
-                        <div className="px-5 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                            <h3 className="text-[10px] font-bold font-heading uppercase tracking-widest text-neutral-400 flex items-center gap-2">
-                                Data Fields
-                            </h3>
-                            <span className="text-[10px] text-neutral-600 bg-white/5 px-2 py-0.5 rounded-full">{dataRows.length} rows</span>
-                        </div>
-                        <div className="p-3 overflow-y-auto flex-1 space-y-1.5 custom-scrollbar">
-                            {dataHeaders.map(header => (
-                                <button
-                                    key={header}
-                                    draggable
-                                    onDragStart={(e) => {
-                                        e.dataTransfer.setData('text/plain', `{${header}}`);
-                                        e.dataTransfer.effectAllowed = 'copy';
-                                    }}
-                                    onClick={() => addText(header)}
-                                    className={clsx(
-                                        "w-full text-left px-4 py-3 rounded-xl text-xs font-medium transition-all flex items-center justify-between group cursor-grab active:cursor-grabbing border",
-                                        mappedColumns[header]
-                                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                            : "bg-black/20 text-neutral-400 border-transparent hover:border-white/10 hover:text-white"
-                                    )}
-                                >
-                                    <span className="truncate pointer-events-none tracking-wide">{header}</span>
-                                    {mappedColumns[header] && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 pointer-events-none" />}
-                                    {!mappedColumns[header] && <Plus className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-neutral-500 pointer-events-none" />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+            {/* LEFT SIDEBAR: Canva Style Sidebar Panel */}
+            <div className="absolute top-20 left-6 z-20 h-[calc(100%-6.5rem)] pointer-events-none">
+                <SidebarPanel
+                    dataHeaders={dataHeaders}
+                    dataRows={dataRows}
+                    mappedColumns={mappedColumns}
+                    onOpenDataUploader={() => setShowDataUploader(true)}
+                    onSelectTemplatePreset={handleSelectTemplatePreset}
+                />
             </div>
 
-            {/* Canvas Area (Interactive) */}
+            {/* Canvas Area (Interactive Stage) */}
             <div className="absolute inset-0 z-0 pointer-events-auto">
-                <KonvaStage templateUrl={templateUrl} />
+                <KonvaStage templateUrl={currentTemplateUrl} dataRows={dataRows} />
             </div>
 
-            {/* Right Properties Panel - PREMIUM DESIGN */}
-            {selectedNode && selectedNode.type === 'text' && (
-                <div className="absolute top-28 right-6 w-80 animate-in slide-in-from-right-10 fade-in duration-300 z-10 pointer-events-auto">
-                    <div className="glass-panel rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 ring-1 ring-white/5">
-                        {/* Panel Header */}
-                        <div className="px-5 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                            <h3 className="text-[10px] font-bold font-heading uppercase tracking-widest text-neutral-400">
-                                Properties
-                            </h3>
-                            <button onClick={() => selectNode(null)} className="text-neutral-500 hover:text-white transition-colors">
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
+            {/* Bottom Live Dataset Carousel & Fit Controls */}
+            <RowCarouselBar
+                dataRows={dataRows}
+                dataHeaders={dataHeaders}
+                onOpenDataPreview={() => setShowDataPreview(true)}
+                onFitScreen={handleFitScreen}
+            />
 
-                        <div className="p-5 space-y-6">
-                            {/* Font Family Selector */}
-                            <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-neutral-600 tracking-wider">Typography</label>
-                                <div className="relative group">
-                                    <select
-                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-500/50 appearance-none text-white cursor-pointer hover:bg-black/60 transition-colors"
-                                        value={selectedNode.fontFamily}
-                                        onChange={(e) => updateProperty('fontFamily', e.target.value)}
-                                        style={{ fontFamily: selectedNode.fontFamily }}
-                                    >
-                                        {GOOGLE_FONTS.map(font => (
-                                            <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500 group-hover:text-white transition-colors">
-                                        <ChevronDown className="w-4 h-4" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Size & Color */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-neutral-600 tracking-wider">Size</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-500/50 text-white font-mono transition-colors"
-                                            value={selectedNode.fontSize}
-                                            onChange={(e) => updateProperty('fontSize', parseInt(e.target.value))}
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 text-[10px] font-bold pointer-events-none">PX</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-neutral-600 tracking-wider">Color</label>
-                                    <div className="w-full h-10 bg-black/40 border border-white/10 rounded-xl flex items-center px-2 gap-2 cursor-pointer hover:border-white/30 transition-colors relative overflow-hidden group">
-                                        <input
-                                            type="color"
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                            value={selectedNode.fill}
-                                            onChange={(e) => updateProperty('fill', e.target.value)}
-                                        />
-                                        <div className="w-6 h-6 rounded-lg border border-white/10 shadow-sm transition-transform group-hover:scale-110" style={{ backgroundColor: selectedNode.fill }} />
-                                        <span className="text-xs font-mono text-neutral-400 group-hover:text-white uppercase tracking-wider">{selectedNode.fill}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Alignment */}
-                            <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-neutral-600 tracking-wider">Align</label>
-                                <div className="flex bg-black/40 border border-white/10 rounded-xl p-1">
-                                    {[
-                                        { key: 'left', icon: AlignLeft },
-                                        { key: 'center', icon: AlignCenter },
-                                        { key: 'right', icon: AlignRight }
-                                    ].map(({ key, icon: Icon }) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => updateProperty('align', key)}
-                                            className={clsx(
-                                                "flex-1 py-1.5 rounded-lg flex items-center justify-center transition-all",
-                                                selectedNode.align === key
-                                                    ? "bg-white/10 text-white shadow-sm"
-                                                    : "text-neutral-600 hover:text-white hover:bg-white/5"
-                                            )}
-                                        >
-                                            <Icon className="w-4 h-4" />
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-white/5" />
-
-                            {/* Mapped Column */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] uppercase font-bold text-emerald-500/80 tracking-wider flex items-center gap-1.5">
-                                        <Database className="w-3 h-3" /> Data Source
-                                    </label>
-                                </div>
-                                {dataHeaders.length > 0 ? (
-                                    <div className="relative group">
-                                        <select
-                                            className="w-full bg-emerald-900/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500/50 text-emerald-400 appearance-none cursor-pointer hover:bg-emerald-900/20 transition-colors"
-                                            value={selectedNode.mappedColumn || ''}
-                                            onChange={(e) => updateProperty('mappedColumn', e.target.value)}
-                                        >
-                                            <option value="">Static Text (No Data)</option>
-                                            {dataHeaders.map(h => (
-                                                <option key={h} value={h}>{h}</option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-500/50 group-hover:text-emerald-500 transition-colors">
-                                            <ChevronDown className="w-4 h-4" />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-black/40 border border-white/10 rounded-xl p-3 flex items-center gap-3 text-neutral-500 text-xs">
-                                        <Database className="w-4 h-4 opacity-50" />
-                                        <span>Link data to automate this text.</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Right Properties Panel - Photoshop / Figma Style */}
+            <PropertiesPanel dataHeaders={dataHeaders} />
 
             {showDataPreview && (
-                <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
                     <DataPreview
                         headers={dataHeaders}
                         rows={dataRows}
@@ -503,7 +356,7 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
             )}
 
             {showDataUploader && (
-                <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
                     <DataUploader
                         onDataLoaded={handleDataLoaded}
                         onClose={() => setShowDataUploader(false)}
@@ -512,11 +365,16 @@ export default function Workspace({ templateUrl, originalFileName, initialProjec
             )}
 
             {showExportModal && (
-                <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
                     <ExportModal
-                        onClose={() => setShowExportModal(false)}
+                        onClose={() => {
+                            setShowExportModal(false);
+                            setIsProcessing(false);
+                            setExportProgress(0);
+                        }}
                         onConfirm={handleExportConfirm}
                         isProcessing={isProcessing}
+                        progress={exportProgress}
                     />
                 </div>
             )}

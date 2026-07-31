@@ -64,106 +64,71 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
         setError(null);
 
         try {
-            // 1. Upload Template to R2
-            const templateFormData = new FormData();
-            templateFormData.append('file', templateFile);
-            templateFormData.append('folder', 'templates');
-
-            const templateUploadRes = await fetch('/api/upload', {
-                method: 'POST',
-                body: templateFormData,
-            });
-
-            if (!templateUploadRes.ok) {
-                throw new Error('Failed to upload template');
+            // 1. Process Template locally (PDF or Image)
+            let templateUrl = '';
+            if (templateFile.type === 'application/pdf' || templateFile.name.endsWith('.pdf')) {
+                const pdfResult = await renderPdfToImage(templateFile);
+                templateUrl = pdfResult.url;
+            } else {
+                templateUrl = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = (err) => reject(err);
+                    reader.readAsDataURL(templateFile);
+                });
             }
 
-            const { url: templateUrl } = await templateUploadRes.json();
-
-            // 2. Upload CSV to R2 (if exists)
-            let csvUrl = null;
+            // 2. Process CSV / Excel locally (if uploaded)
             let dataRows: any[] = [];
             let dataHeaders: string[] = [];
 
             if (dataFile) {
-                const dataFormData = new FormData();
-                dataFormData.append('file', dataFile);
-                dataFormData.append('folder', 'data');
-
-                const dataUploadRes = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: dataFormData,
-                });
-
-                if (dataUploadRes.ok) {
-                    const { url } = await dataUploadRes.json();
-                    csvUrl = url;
-
-                    // Parse CSV/Excel for preview
-                    if (dataFile.name.endsWith('.csv')) {
-                        await new Promise<void>((resolve, reject) => {
-                            Papa.parse(dataFile, {
-                                header: true,
-                                skipEmptyLines: true,
-                                complete: (results) => {
-                                    dataRows = results.data;
-                                    dataHeaders = results.meta.fields || [];
-                                    resolve();
-                                },
-                                error: (err) => reject(err),
-                            });
+                if (dataFile.name.endsWith('.csv')) {
+                    await new Promise<void>((resolve, reject) => {
+                        Papa.parse(dataFile, {
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: (results) => {
+                                dataRows = results.data;
+                                dataHeaders = results.meta.fields || [];
+                                resolve();
+                            },
+                            error: (err) => reject(err),
                         });
-                    } else {
-                        // Excel
-                        const arrayBuffer = await dataFile.arrayBuffer();
-                        const workbook = XLSX.read(arrayBuffer);
-                        const sheetName = workbook.SheetNames[0];
-                        const sheet = workbook.Sheets[sheetName];
-                        dataRows = XLSX.utils.sheet_to_json(sheet);
-                        if (dataRows.length > 0) {
-                            dataHeaders = Object.keys(dataRows[0]);
-                        }
+                    });
+                } else {
+                    const arrayBuffer = await dataFile.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer);
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    dataRows = XLSX.utils.sheet_to_json(sheet);
+                    if (dataRows.length > 0) {
+                        dataHeaders = Object.keys(dataRows[0]);
                     }
                 }
             }
 
-            // 3. Save Project to Supabase
-            const { createClient } = await import('@/lib/supabase/client');
-            const supabase = createClient();
+            const projectId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
 
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) {
-                throw new Error('You must be logged in to create a project');
-            }
-
-            const { data: project, error: dbError } = await supabase
-                .from('projects')
-                .insert({
-                    user_id: user.id,
-                    name: projectName,
-                    template_url: templateUrl,
-                    original_file_name: templateFile.name,
-                    csv_url: csvUrl,
-                    status: 'draft',
-                })
-                .select()
-                .single();
-
-            if (dbError) {
-                console.error('Database error:', dbError);
-                throw new Error('Failed to save project to database');
-            }
-
-            // 4. Return Data to Editor
-            onCreate({
-                id: project.id,
+            const projectData: NewProjectData = {
+                id: projectId,
                 name: projectName,
                 templateUrl,
                 templateOriginalName: templateFile.name,
                 dataRows,
                 dataHeaders,
-            });
+            };
+
+            // Save to localStorage for instant recovery
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('korae_current_project', JSON.stringify({
+                    ...projectData,
+                    canvasNodes: [],
+                    updatedAt: new Date().toISOString()
+                }));
+            }
+
+            onCreate(projectData);
 
         } catch (e: any) {
             console.error(e);
@@ -173,18 +138,18 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="w-full max-w-2xl bg-[#0A0A0A]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="w-full max-w-2xl bg-white/90 backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Background Grid */}
                 <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8 relative z-10">
                     <div>
-                        <h2 className="text-2xl font-bold text-white">New Project</h2>
-                        <p className="text-neutral-400 text-sm mt-1">Setup your certificate generation project</p>
+                        <h2 className="text-2xl font-bold text-slate-900">New Project</h2>
+                        <p className="text-slate-600 text-sm mt-1">Setup your certificate generation project</p>
                     </div>
-                    {/* <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors">
+                    {/* <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors">
                         <X className="w-5 h-5" />
                     </button> */}
                 </div>
@@ -192,27 +157,27 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
                 <div className="space-y-6 overflow-y-auto pr-2 relative z-10 pb-4">
                     {/* Project Name */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-neutral-300">Project Name</label>
+                        <label className="text-sm font-medium text-slate-700">Project Name</label>
                         <input
                             type="text"
                             value={projectName}
                             onChange={(e) => setProjectName(e.target.value)}
                             placeholder="e.g. Workshop Cancellation 2024"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-neutral-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Template Upload */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-300 flex items-center gap-2">
+                            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                 <FileText className="w-4 h-4 text-violet-400" />
                                 Certificate Template
                             </label>
                             <div
                                 {...templateDropzone.getRootProps()}
                                 className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all h-[180px] text-center
-                                    ${templateFile ? 'border-violet-500/50 bg-violet-500/5' : 'border-white/10 hover:border-white/20 hover:bg-white/5'}
+                                    ${templateFile ? 'border-violet-500/50 bg-violet-500/5' : 'border-slate-200 hover:border-white/20 hover:bg-slate-50'}
                                 `}
                             >
                                 <input {...templateDropzone.getInputProps()} />
@@ -222,18 +187,18 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
                                             <CheckCircle2 className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium text-white truncate max-w-[200px]">{templateFile.name}</p>
+                                            <p className="text-sm font-medium text-slate-900 truncate max-w-[200px]">{templateFile.name}</p>
                                             <p className="text-xs text-violet-400 mt-1">Ready to upload</p>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400">
+                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-600">
                                             <Upload className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-neutral-300">Drop Template</p>
-                                            <p className="text-xs text-neutral-500 mt-1">PDF, PNG, JPG</p>
+                                            <p className="text-sm text-slate-700">Drop Template</p>
+                                            <p className="text-xs text-slate-500 mt-1">PDF, PNG, JPG</p>
                                         </div>
                                     </>
                                 )}
@@ -242,14 +207,14 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
 
                         {/* Data Upload */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-300 flex items-center gap-2">
+                            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                 <Table className="w-4 h-4 text-emerald-400" />
-                                Data File <span className="text-neutral-500 text-xs font-normal">(Optional)</span>
+                                Data File <span className="text-slate-500 text-xs font-normal">(Optional)</span>
                             </label>
                             <div
                                 {...dataDropzone.getRootProps()}
                                 className={`border border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all h-[180px] text-center
-                                    ${dataFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/10 hover:border-white/20 hover:bg-white/5'}
+                                    ${dataFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-white/20 hover:bg-slate-50'}
                                 `}
                             >
                                 <input {...dataDropzone.getInputProps()} />
@@ -259,18 +224,18 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
                                             <CheckCircle2 className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium text-white truncate max-w-[200px]">{dataFile.name}</p>
+                                            <p className="text-sm font-medium text-slate-900 truncate max-w-[200px]">{dataFile.name}</p>
                                             <p className="text-xs text-emerald-400 mt-1">Ready to parse</p>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400">
+                                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-600">
                                             <Upload className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-sm text-neutral-300">Drop CSV / Excel</p>
-                                            <p className="text-xs text-neutral-500 mt-1">Auto-mapping enabled</p>
+                                            <p className="text-sm text-slate-700">Drop CSV / Excel</p>
+                                            <p className="text-xs text-slate-500 mt-1">Auto-mapping enabled</p>
                                         </div>
                                     </>
                                 )}
@@ -289,14 +254,14 @@ export default function NewProjectModal({ onClose, onCreate }: NewProjectModalPr
                 <div className="flex items-center justify-end gap-3 mt-4 relative z-10">
                     {/* <button
                         onClick={onClose}
-                        className="px-6 py-2 rounded-full border border-white/10 text-neutral-300 hover:bg-white/5 transition-colors font-medium text-sm"
+                        className="px-6 py-2 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors font-medium text-sm"
                     >
                         Cancel
                     </button> */}
                     <button
                         onClick={handleSubmit}
                         disabled={isProcessing}
-                        className="px-8 py-2.5 rounded-full bg-white text-black font-bold text-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
+                        className="px-8 py-2.5 rounded-full bg-indigo-600 text-slate-900 font-bold text-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
                     >
                         {isProcessing ? (
                             <>

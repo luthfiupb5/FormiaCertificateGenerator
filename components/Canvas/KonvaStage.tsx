@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { Stage, Layer, Text, Image as KonvaImage, Rect, Transformer } from 'react-konva';
+import { Stage, Layer, Text, Image as KonvaImage, Rect, Circle, Transformer } from 'react-konva';
 import useImage from 'use-image';
 import { useCanvasStore, CanvasNode } from '@/lib/store';
 import { Hand, MousePointer2, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
@@ -22,7 +22,6 @@ const URLImage = ({ src, nodeProps, isSelected, onClick, onTransformEnd, updateN
         }
     }, [image, nodeProps.width, nodeProps.height, nodeProps.id, updateNode]);
 
-    // Initial center logic could go here if needed, but we rely on store props
     return (
         <KonvaImage
             image={image}
@@ -33,7 +32,7 @@ const URLImage = ({ src, nodeProps, isSelected, onClick, onTransformEnd, updateN
             onTap={onClick}
             onTransformEnd={onTransformEnd}
             onDragEnd={(e) => {
-                onTransformEnd(e); // Reuse transform end for drag end to save position
+                onTransformEnd(e);
             }}
         />
     );
@@ -41,9 +40,10 @@ const URLImage = ({ src, nodeProps, isSelected, onClick, onTransformEnd, updateN
 
 interface KonvaStageProps {
     templateUrl?: string | null;
+    dataRows?: any[];
 }
 
-export default function KonvaStage({ templateUrl }: KonvaStageProps) {
+export default function KonvaStage({ templateUrl, dataRows = [] }: KonvaStageProps) {
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -61,30 +61,24 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
         updateNode,
         activeTool,
         setActiveTool,
-        addNode
+        addNode,
+        activeRowIndex,
     } = useCanvasStore();
 
     // Load Template as Background Node
     useEffect(() => {
         if (!templateUrl) return;
 
-        // Check if background already exists to avoid dupes
-        // In a real app we might want to be smarter, but for now just add it if empty or replace
-        // For simplicity, let's just make sure we have an 'bg-image' node
         const bgNode = nodes.find(n => n.id === 'background-template');
         if (!bgNode) {
-            // We need to load image dimensions first to center it? 
-            // Konva handles it, but let's just add it at 0,0 first.
             addNode({
                 id: 'background-template',
                 type: 'image',
                 x: 0,
                 y: 0,
                 src: templateUrl,
-                // Lock background
             });
 
-            // Auto-fit after a small delay to let image load (or we could use smarter logic)
             setTimeout(fitToScreen, 500);
         }
     }, [templateUrl]);
@@ -104,67 +98,57 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
         }
     }, [selectedNodeId, nodes]);
 
-    // Zoom Logic
+    // Handle Stage Zooming
     const handleWheel = (e: any) => {
         e.evt.preventDefault();
+        const scaleBy = 1.05;
+        const stageObj = stageRef.current;
+        const oldScale = stageObj.scaleX();
 
-        if (e.evt.ctrlKey || e.evt.metaKey || e.evt.altKey) {
-            // Zoom
-            const scaleBy = 1.1;
-            const stage = stageRef.current;
-            const oldScale = stage.scaleX();
-            const pointer = stage.getPointerPosition();
+        const pointer = stageObj.getPointerPosition();
+        const mousePointTo = {
+            x: (pointer.x - stageObj.x()) / oldScale,
+            y: (pointer.y - stageObj.y()) / oldScale,
+        };
 
-            const mousePointTo = {
-                x: (pointer.x - stage.x()) / oldScale,
-                y: (pointer.y - stage.y()) / oldScale,
-            };
+        const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+        const clampedScale = Math.max(0.1, Math.min(newScale, 10));
 
-            const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+        const newPos = {
+            x: pointer.x - mousePointTo.x * clampedScale,
+            y: pointer.y - mousePointTo.y * clampedScale,
+        };
 
-            // Limits
-            if (newScale > 20 || newScale < 0.05) return;
-
-            setStage({
-                scale: newScale,
-                x: pointer.x - mousePointTo.x * newScale,
-                y: pointer.y - mousePointTo.y * newScale,
-            });
-        } else {
-            // Pan
-            const stage = stageRef.current;
-            const newPos = {
-                x: stage.x() - e.evt.deltaX,
-                y: stage.y() - e.evt.deltaY,
-            };
-            setStage({
-                ...stage, // keep scale
-                scale: stage.scaleX(),
-                x: newPos.x,
-                y: newPos.y
-            });
-        }
+        setStage({
+            scale: clampedScale,
+            x: newPos.x,
+            y: newPos.y,
+        });
     };
 
     const fitToScreen = () => {
-        if (!containerRef.current || !stageRef.current) return;
-        // We assume background-template is the main content
-        // In a real app we'd calculate bounding box of all content
+        const bgNode = nodes.find(n => n.id === 'background-template');
+        if (!bgNode || !bgNode.width || !bgNode.height || !containerRef.current) return;
 
-        // For now, let's just reset to reasonable defaults or try to fit BG
-        // Since we don't easily know BG size without loading it, let's just Reset to 100% at 0,0 or similar
-        // Or better, let's rely on the user to zoom for now, or implement strict fit later.
+        const containerWidth = containerRef.current.offsetWidth;
+        const containerHeight = containerRef.current.offsetHeight;
 
-        // Simple Reset
-        setStage({ scale: 1, x: 50, y: 50 });
+        const scaleX = (containerWidth * 0.85) / bgNode.width;
+        const scaleY = (containerHeight * 0.85) / bgNode.height;
+        const scale = Math.min(scaleX, scaleY, 1);
+
+        const x = (containerWidth - bgNode.width * scale) / 2;
+        const y = (containerHeight - bgNode.height * scale) / 2;
+
+        setStage({ scale, x, y });
     };
 
     const handleStageDragEnd = (e: any) => {
-        if (e.target === stageRef.current) {
+        if (activeTool === 'hand') {
             setStage({
-                scale: stageRef.current.scaleX(),
-                x: stageRef.current.x(),
-                y: stageRef.current.y()
+                ...stage,
+                x: e.target.x(),
+                y: e.target.y(),
             });
         }
     };
@@ -177,26 +161,33 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
             rotation: node.rotation(),
             scaleX: node.scaleX(),
             scaleY: node.scaleY(),
+            width: node.width ? node.width() : undefined,
+            height: node.height ? node.height() : undefined,
         });
     };
 
+    // Double Click to Edit Text
     const handleTextDblClick = (e: any, node: CanvasNode) => {
         const textNode = e.target;
-        const absPos = textNode.getAbsolutePosition();
-        const absScaleX = textNode.getAbsoluteScale().x;
-        const absScaleY = textNode.getAbsoluteScale().y;
-        const absRotation = textNode.getAbsoluteRotation();
+        const stageObj = stageRef.current;
+        const textPosition = textNode.absolutePosition();
+        const stageBox = containerRef.current?.getBoundingClientRect();
+
+        if (!stageBox) return;
+
+        const areaPosition = {
+            x: stageBox.left + textPosition.x,
+            y: stageBox.top + textPosition.y,
+        };
 
         setTextInputStyle({
-            top: absPos.y,
-            left: absPos.x,
-            width: textNode.width() * absScaleX,
-            height: (textNode.height() || textNode.fontSize()) * absScaleY * 1.2, // Add some padding/line-height buffer
-            fontSize: (node.fontSize || 24) * absScaleY,
-            fontFamily: node.fontFamily || 'Inter',
-            fill: node.fill || 'black',
-            align: node.align || 'center',
-            transform: `rotate(${absRotation}deg)`,
+            top: `${areaPosition.y}px`,
+            left: `${areaPosition.x}px`,
+            width: `${textNode.width() * stage.scale}px`,
+            fontSize: `${node.fontSize! * stage.scale}px`,
+            fontFamily: node.fontFamily,
+            color: node.fill,
+            textAlign: node.align || 'center',
         });
         setEditingNode(node.id);
     };
@@ -211,13 +202,11 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
-        // Convert to stage coords
         const x = (pointer.x - stage.x()) / stage.scaleX();
         const y = (pointer.y - stage.y()) / stage.scaleY();
 
         const content = e.dataTransfer.getData('text/plain');
         if (content) {
-            // Check if content is a valid column mapping
             const mappedColumn = content.startsWith('{') && content.endsWith('}')
                 ? content.slice(1, -1)
                 : undefined;
@@ -235,49 +224,37 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                 align: 'center',
                 mappedColumn
             });
-            // Select new node
-            // Note: We can't easily get the ID here synchronous from addNode unless we generated it first.
-            // Which we did (uuidv4). But let's skip auto-selection for Drop for now or refactor.
         }
     };
 
     const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault(); // Essential to allow drop
+        e.preventDefault();
     };
 
-    // Draw Tool Handlers
     const handleMouseDown = (e: any) => {
         if (activeTool !== 'text') {
-            // Standard selection logic
-            // Deselect if clicked start on empty stage
             if (e.target === e.target.getStage()) {
                 selectNode(null);
             }
             return;
         }
 
-        // Start Drawing
         const stage = stageRef.current;
         const pointer = stage.getRelativePointerPosition();
         setIsDrawing(true);
         setStartPos(pointer);
-        selectNode(null); // Deselect others
+        selectNode(null);
     };
 
-    const handleMouseMove = () => {
-        if (!isDrawing || activeTool !== 'text' || !startPos) return;
-        // Visual feedback could be added here (e.g. temporary rect)
-        // For now we just wait for mouse up
-    };
+    const handleMouseMove = () => {};
 
     const handleMouseUp = () => {
         if (!isDrawing || activeTool !== 'text' || !startPos) return;
 
         const stage = stageRef.current;
         const pointer = stage.getRelativePointerPosition();
-
         const width = Math.abs(pointer.x - startPos.x);
-        // Minimum width threshold
+
         if (width > 10) {
             const id = uuidv4();
             addNode({
@@ -289,12 +266,12 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                 fontSize: 40,
                 fontFamily: 'Inter',
                 fill: '#000000',
-                width: width, // Use drawn width
+                width: width,
                 align: 'left',
             });
             selectNode(id);
-            setActiveTool('select'); // Switch back to select
-            setEditingNode(id); // Auto-enter edit mode? Optional but nice.
+            setActiveTool('select');
+            setEditingNode(id);
         }
 
         setIsDrawing(false);
@@ -320,17 +297,15 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                 scaleY={stage.scale}
                 x={stage.x}
                 y={stage.y}
-                draggable={activeTool === 'hand'} // Only drag stage if Hand tool
+                draggable={activeTool === 'hand'}
                 onDragEnd={handleStageDragEnd}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
             >
                 <Layer>
-                    {/* Render background template first, then all other nodes */}
                     {[...nodes]
                         .sort((a, b) => {
-                            // Background template always renders first (bottom layer)
                             if (a.id === 'background-template') return -1;
                             if (b.id === 'background-template') return 1;
                             return 0;
@@ -359,14 +334,72 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                                             scaleY: node.scaleY,
                                             width: node.width,
                                             height: node.height,
-                                            listening: activeTool !== 'hand' && !isRefBg, // Disable interactions if Hand tool or Background
+                                            listening: activeTool !== 'hand' && !isRefBg,
                                         }}
                                         onTransformEnd={(e: any) => handleNodeChange(node.id, e)}
                                     />
                                 );
                             }
 
+                            if (node.type === 'rect') {
+                                return (
+                                    <Rect
+                                        key={node.id}
+                                        id={node.id}
+                                        name={node.id}
+                                        x={node.x}
+                                        y={node.y}
+                                        width={node.width || 200}
+                                        height={node.height || 100}
+                                        fill={node.fill || '#e2e8f0'}
+                                        stroke={node.stroke}
+                                        strokeWidth={node.strokeWidth || 0}
+                                        cornerRadius={node.cornerRadius || 0}
+                                        opacity={node.opacity ?? 1}
+                                        rotation={node.rotation || 0}
+                                        scaleX={node.scaleX || 1}
+                                        scaleY={node.scaleY || 1}
+                                        draggable={activeTool === 'select'}
+                                        onClick={() => activeTool === 'select' && selectNode(node.id)}
+                                        onDragEnd={(e) => handleNodeChange(node.id, e)}
+                                        onTransformEnd={(e) => handleNodeChange(node.id, e)}
+                                    />
+                                );
+                            }
+
+                            if (node.type === 'circle' || node.type === 'badge') {
+                                return (
+                                    <Circle
+                                        key={node.id}
+                                        id={node.id}
+                                        name={node.id}
+                                        x={node.x}
+                                        y={node.y}
+                                        radius={(node.width || 100) / 2}
+                                        fill={node.fill || '#cbd5e1'}
+                                        stroke={node.stroke}
+                                        strokeWidth={node.strokeWidth}
+                                        opacity={node.opacity ?? 1}
+                                        rotation={node.rotation || 0}
+                                        scaleX={node.scaleX || 1}
+                                        scaleY={node.scaleY || 1}
+                                        draggable={activeTool === 'select'}
+                                        onClick={() => activeTool === 'select' && selectNode(node.id)}
+                                        onDragEnd={(e) => handleNodeChange(node.id, e)}
+                                        onTransformEnd={(e) => handleNodeChange(node.id, e)}
+                                    />
+                                );
+                            }
+
                             if (node.type === 'text') {
+                                let displayText = node.text || '';
+                                if (dataRows && dataRows.length > 0 && node.mappedColumn && dataRows[activeRowIndex]) {
+                                    const val = dataRows[activeRowIndex][node.mappedColumn];
+                                    if (val !== undefined && val !== null) {
+                                        displayText = String(val);
+                                    }
+                                }
+
                                 return (
                                     <Text
                                         key={node.id}
@@ -374,7 +407,7 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                                         name={node.id}
                                         x={node.x}
                                         y={node.y}
-                                        text={node.text}
+                                        text={displayText}
                                         fontFamily={node.fontFamily || 'Inter'}
                                         fontSize={node.fontSize || 24}
                                         fill={node.fill || 'black'}
@@ -387,30 +420,24 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                                         onClick={() => activeTool === 'select' && selectNode(node.id)}
                                         onTap={() => activeTool === 'select' && selectNode(node.id)}
                                         onDblClick={(e) => activeTool === 'select' && handleTextDblClick(e, node)}
-                                        opacity={isEditing ? 0 : 1} // Hide node while editing
-                                        // Transformations
+                                        opacity={isEditing ? 0 : (node.opacity ?? 1)}
                                         onDragEnd={(e) => handleNodeChange(node.id, e)}
                                         onTransform={(e) => {
-                                            const node = e.target;
-                                            // Compute new width based on scale
-                                            // We only allow width resizing, so we effectively "consume" the scale into width
-                                            const scaleX = node.scaleX();
-
-                                            // Reset scale to 1 and update width
-                                            node.scaleX(1);
-                                            node.scaleY(1);
-                                            node.width(Math.max(node.width() * scaleX, 30));
+                                            const nodeObj = e.target;
+                                            const scaleX = nodeObj.scaleX();
+                                            nodeObj.scaleX(1);
+                                            nodeObj.scaleY(1);
+                                            nodeObj.width(Math.max(nodeObj.width() * scaleX, 30));
                                         }}
                                         onTransformEnd={(e) => {
-                                            const node = e.target;
-                                            // Sync final state to store
-                                            updateNode(node.id(), {
-                                                x: node.x(),
-                                                y: node.y(),
-                                                rotation: node.rotation(),
-                                                scaleX: 1, // Always 1 for text now
+                                            const nodeObj = e.target;
+                                            updateNode(nodeObj.id(), {
+                                                x: nodeObj.x(),
+                                                y: nodeObj.y(),
+                                                rotation: nodeObj.rotation(),
+                                                scaleX: 1,
                                                 scaleY: 1,
-                                                width: node.width(),
+                                                width: nodeObj.width(),
                                             });
                                         }}
                                     />
@@ -421,9 +448,6 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
 
                     <Transformer
                         ref={transformerRef}
-                        // For text nodes, we might want to restrict anchors if we solely want width resizing
-                        // But enabling all anchors with the logic above allows "corner drag" to just resize width too, 
-                        // which is acceptable "Text Box" behavior.
                         boundBoxFunc={(oldBox, newBox) => {
                             if (newBox.width < 5 || newBox.height < 5) return oldBox;
                             return newBox;
@@ -469,36 +493,6 @@ export default function KonvaStage({ templateUrl }: KonvaStageProps) {
                     }}
                 />
             )}
-
-            {/* Toolbar Overlay (Restoring previous UI) */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-2 bg-neutral-800/90 backdrop-blur border border-white/10 rounded-full shadow-xl">
-                <button
-                    onClick={() => setActiveTool(activeTool === 'hand' ? 'select' : 'hand')}
-                    className={clsx(
-                        "p-2 rounded-full transition-colors mr-2 border-r border-white/10 pr-3",
-                        activeTool === 'hand' ? "bg-primary text-white" : "hover:bg-white/10 text-neutral-400 hover:text-white"
-                    )}
-                    title={activeTool === 'hand' ? "Switch to Select (V)" : "Switch to Hand (H)"}
-                >
-                    {activeTool === 'hand' ? <Hand className="w-5 h-5" /> : <MousePointer2 className="w-5 h-5" />}
-                </button>
-
-                <button onClick={() => setStage({ ...stage, scale: stage.scale / 1.1 })} className="p-2 hover:bg-white/10 rounded-full text-neutral-400 hover:text-white transition-colors">
-                    <ZoomOut className="w-5 h-5" />
-                </button>
-
-                <span className="text-xs font-mono w-12 text-center text-neutral-400">{Math.round(stage.scale * 100)}%</span>
-
-                <button onClick={() => setStage({ ...stage, scale: stage.scale * 1.1 })} className="p-2 hover:bg-white/10 rounded-full text-neutral-400 hover:text-white transition-colors">
-                    <ZoomIn className="w-5 h-5" />
-                </button>
-
-                <div className="w-px h-4 bg-white/10 mx-1" />
-
-                <button onClick={fitToScreen} className="p-2 hover:bg-white/10 rounded-full text-neutral-400 hover:text-white transition-colors">
-                    <Maximize className="w-5 h-5" />
-                </button>
-            </div>
         </div>
     );
 }

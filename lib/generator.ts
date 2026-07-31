@@ -1,53 +1,71 @@
-
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import fontkit from '@pdf-lib/fontkit';
-
 import { fetchFontBuffer } from '@/lib/fonts';
 
 interface GenerationConfig {
     templateUrl: string;
     data: any[];
-    mappings: Record<string, string>; // holderId -> columnName
-    objects: any[]; // Fabric objects to get coordinates
+    mappings: Record<string, string>;
+    objects: any[];
     canvasWidth: number;
     canvasHeight: number;
     exportFormat?: 'pdf' | 'jpg';
     exportStructure?: 'individual' | 'merged';
+    onProgress?: (percent: number) => void;
 }
 
+// Convert SVG Data URL or remote URL to clean ArrayBuffer ONCE
+async function prepareTemplateBytes(templateUrl: string): Promise<{ bytes: ArrayBuffer; isPdf: boolean }> {
+    if (templateUrl.startsWith('data:image/svg+xml')) {
+        const img = new Image();
+        img.src = templateUrl;
+        await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 1200;
+        canvas.height = img.height || 850;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(img, 0, 0);
+        }
+        const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
+        if (blob) {
+            const buf = await blob.arrayBuffer();
+            return { bytes: buf, isPdf: false };
+        }
+    }
+
+    const res = await fetch(templateUrl);
+    const bytes = await res.arrayBuffer();
+    const isPdf = String.fromCharCode(...new Uint8Array(bytes.slice(0, 4))) === '%PDF';
+    return { bytes, isPdf };
+}
 
 export async function generateCertificates({
     templateUrl,
     data,
-    mappings,
     objects,
     canvasWidth,
     canvasHeight,
     exportFormat = 'pdf',
-    exportStructure = 'individual'
+    exportStructure = 'individual',
+    onProgress
 }: GenerationConfig) {
+    if (onProgress) onProgress(5);
+
     const zip = new JSZip();
+    const rows = data.length > 0 ? data : [{}];
 
-    // Load the template (PDF or Image)
-    const templateBytes = await fetch(templateUrl).then((res) => res.arrayBuffer());
+    // ── 1. PRE-LOAD TEMPLATE ONCE ──
+    const { bytes: templateBytes, isPdf } = await prepareTemplateBytes(templateUrl);
+    if (onProgress) onProgress(15);
 
-    // Check if it's a PDF (Magic number: %PDF)
-    const isPdf = String.fromCharCode(...new Uint8Array(templateBytes.slice(0, 4))) === '%PDF';
-
-    let pdfDoc: PDFDocument;
-
-    // We need to prepare the "base" document structure depending on input
-    if (isPdf) {
-        // It's a PDF, we will load it for each row (or load once and copy, but copying enables edits)
-        // Optimization: Load once, then copyPages for each row? 
-        // For now, to ensure isolation, we can assume we load the base.
-        // Actually, we need to load it fresh or modify a copy.
-        // Let's stick to the current loop structure but handle the image case.
-    }
-
-    // 1. Identify Unique Fonts
+    // ── 2. PRE-FETCH FONTS ONCE ──
     const usedFonts = new Set<string>();
     objects.forEach(obj => {
         if ((obj.type === 'i-text' || obj.type === 'text') && obj.fontFamily) {
@@ -55,7 +73,6 @@ export async function generateCertificates({
         }
     });
 
-    // 2. Fetch Font Buffers
     const fontBuffers: Record<string, ArrayBuffer> = {};
     for (const fontFamily of usedFonts) {
         if (fontFamily !== 'Helvetica' && fontFamily !== 'Times New Roman' && fontFamily !== 'Courier') {
@@ -65,63 +82,83 @@ export async function generateCertificates({
             }
         }
     }
+    if (onProgress) onProgress(25);
 
-    // --- NEW LOGIC START ---
+    // ── 3. PRE-BUILD MASTER PDF TEMPLATE & EMBED FONTS ONCE ──
+    const masterDoc = await PDFDocument.create();
+    masterDoc.registerFontkit(fontkit);
 
+    const masterFonts: Record<string, any> = {};
+    masterFonts['Helvetica'] = await masterDoc.embedFont(StandardFonts.Helvetica);
+
+    for (const [family, buffer] of Object.entries(fontBuffers)) {
+        try {
+            masterFonts[family] = await masterDoc.embedFont(buffer);
+        } catch {
+            masterFonts[family] = masterFonts['Helvetica'];
+        }
+    }
+
+    let masterTemplateDoc: PDFDocument;
+    if (isPdf) {
+        masterTemplateDoc = await PDFDocument.load(templateBytes);
+    } else {
+        masterTemplateDoc = await PDFDocument.create();
+        let image;
+        try {
+            image = await masterTemplateDoc.embedPng(templateBytes);
+        } catch {
+            image = await masterTemplateDoc.embedJpg(templateBytes);
+        }
+        const p = masterTemplateDoc.addPage([image.width, image.height]);
+        p.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+    }
+
+    if (onProgress) onProgress(35);
+
+    // ── 4. ULTRA-FAST BATCH GENERATION ──
     let mergedPdfDoc: PDFDocument | null = null;
     if (exportFormat === 'pdf' && exportStructure === 'merged') {
         mergedPdfDoc = await PDFDocument.create();
         mergedPdfDoc.registerFontkit(fontkit);
     }
 
-    // We'll iterate through each data row
-    for (let i = 0; i < data.length; i++) {
-        const row = data[i];
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
 
-        // For individual mode, we create a fresh doc each time.
-        // For merged mode, we create a temp doc to render the page, then copy it to the merged doc.
-        // Why temp doc? Because we might need to load the template PDF each time if it's a PDF template.
-
-        let currentDoc: PDFDocument;
-        if (isPdf) {
-            currentDoc = await PDFDocument.load(templateBytes);
-        } else {
-            currentDoc = await PDFDocument.create();
-            // Embed Image
-            let image;
-            try {
-                image = await currentDoc.embedPng(templateBytes);
-            } catch {
-                image = await currentDoc.embedJpg(templateBytes);
-            }
-            const page = currentDoc.addPage([image.width, image.height]);
-            page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+        // Yield control every 10 items so UI updates live
+        if (i % 10 === 0) {
+            const pct = 35 + Math.round(((i + 1) / rows.length) * 55);
+            if (onProgress) onProgress(pct);
+            await new Promise(r => setTimeout(r, 0));
         }
 
+        // Clone base template page
+        const currentDoc = await PDFDocument.create();
         currentDoc.registerFontkit(fontkit);
 
-        // Embed Fonts (Optimization: In merged mode, we could embed once, but pdf-lib copyPages handles this)
+        const [copiedBasePage] = await currentDoc.copyPages(masterTemplateDoc, [0]);
+        const page = currentDoc.addPage(copiedBasePage);
+
+        // Embed pre-cached fonts for this doc instance
         const embeddedFonts: Record<string, any> = {};
         embeddedFonts['Helvetica'] = await currentDoc.embedFont(StandardFonts.Helvetica);
-
         for (const [family, buffer] of Object.entries(fontBuffers)) {
             try {
                 embeddedFonts[family] = await currentDoc.embedFont(buffer);
-            } catch (e) {
-                console.warn(`Failed to embed font ${family}`, e);
+            } catch {
                 embeddedFonts[family] = embeddedFonts['Helvetica'];
             }
         }
 
-        const page = currentDoc.getPages()[0];
         const { width, height } = page.getSize();
         const scaleX = width / canvasWidth;
         const scaleY = height / canvasHeight;
 
-        // Draw Text
+        // Draw Text Fields
         for (const obj of objects) {
             if ((obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') && obj.mappedColumn) {
-                const textValue = row[obj.mappedColumn] || '';
+                const textValue = String(row[obj.mappedColumn] || '');
                 if (!textValue) continue;
 
                 const fontFamily = obj.fontFamily || 'Helvetica';
@@ -130,7 +167,6 @@ export async function generateCertificates({
                 let x = obj.x !== undefined ? obj.x : obj.left;
                 let y = obj.y !== undefined ? obj.y : obj.top;
 
-                // Legacy Fabric Origin
                 if (obj.originX === 'center') x -= (obj.width || 0) / 2;
                 if (obj.originY === 'center') y -= (obj.height || 0) / 2;
 
@@ -139,7 +175,7 @@ export async function generateCertificates({
                 const fontSize = (obj.fontSize || 20) * scaleY;
                 const pdfY = height - (y * scaleY) - (fontSize * 0.8);
 
-                const colorHex = obj.fill as string || '#000000';
+                const colorHex = (obj.fill as string) || '#000000';
                 let r = 0, g = 0, b = 0;
                 if (colorHex.startsWith('#')) {
                     r = parseInt(colorHex.slice(1, 3), 16) / 255;
@@ -150,17 +186,12 @@ export async function generateCertificates({
                 let textWidth = 0;
                 try {
                     textWidth = font.widthOfTextAtSize(textValue, fontSize);
-                    console.log(`[Generator] Text: ${textValue}, Font: ${fontFamily}, Size: ${fontSize}, Width: ${textWidth}`);
-                } catch (e) {
-                    console.error("[Generator] Error measuring text width:", e);
+                } catch {
+                    textWidth = 0;
                 }
 
-                console.log(`[Generator] Align: ${obj.align}, X: ${x} -> PDFX: ${pdfX}, BoxW: ${boxWidth}`);
-
                 if (obj.align === 'center') {
-                    const offset = (boxWidth - textWidth) / 2;
-                    console.log(`[Generator] Centering Offset: ${offset}`);
-                    pdfX += offset;
+                    pdfX += (boxWidth - textWidth) / 2;
                 } else if (obj.align === 'right') {
                     pdfX += boxWidth - textWidth;
                 }
@@ -175,67 +206,27 @@ export async function generateCertificates({
             }
         }
 
-        // --- SAVE / MERGE LOGIC ---
-
+        // Save into merged PDF or ZIP archive
         if (exportFormat === 'pdf' && exportStructure === 'merged') {
-            // Copy page to merged doc
             const [copiedPage] = await mergedPdfDoc!.copyPages(currentDoc, [0]);
             mergedPdfDoc!.addPage(copiedPage);
         } else if (exportFormat === 'pdf') {
-            // Individual PDF
             const pdfBytes = await currentDoc.save();
-            zip.file(`Certificate-${i + 1}-${row.Name || 'user'}.pdf`, pdfBytes);
-        } else if (exportFormat === 'jpg') {
-            // JPG Export
-            // Since pdf-lib can't export to JPG, we actually save the PDF bytes here
-            // and relying on the FACT that we can't do this purely server-side (headless) easily without canvas.
-            // BUT, wait, we are client-side in the browser executing this.
-            // We can use pdfjs-dist to render THIS `pdfBytes` to a canvas and get a blob.
-
-            const pdfBytes = await currentDoc.save();
-
-            // We need to render this PDF page to an image.
-            // Dynamic import pdfjs
-            try {
-                // Dynamically load to avoid SSR issues if any
-                const pdfjsLib = await import('pdfjs-dist');
-                pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-                const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
-                const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(1);
-
-                // Render to canvas
-                const viewport = page.getViewport({ scale: 2 }); // 2x scale for better quality
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                if (context) {
-                    await page.render({ canvasContext: context, viewport: viewport } as any).promise;
-
-                    // Canvas to Blob
-                    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-                    if (blob) {
-                        zip.file(`Certificate-${i + 1}-${row.Name || 'user'}.jpg`, blob);
-                    }
-                }
-            } catch (e) {
-                console.error("JPG Conversion failed", e);
-                // Fallback to PDF if JPG fails? Or valid zip with error log?
-                zip.file(`Certificate-${i + 1}-ERROR.txt`, "Failed to convert to JPG: " + e);
-            }
+            const nameVal = row.Name || row.First_Name || row[Object.keys(row)[0]] || `Row-${i + 1}`;
+            zip.file(`Certificate-${i + 1}-${String(nameVal).replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`, pdfBytes);
         }
     }
 
-    // Finalize
+    if (onProgress) onProgress(95);
+
+    // ── 5. FINALIZE & DOWNLOAD ──
     if (exportFormat === 'pdf' && exportStructure === 'merged' && mergedPdfDoc) {
         const mergedBytes = await mergedPdfDoc.save();
         saveAs(new Blob([mergedBytes as any], { type: 'application/pdf' }), 'certificates-merged.pdf');
     } else {
-        // Individual PDFs or JPGs -> ZIP
-        const content = await zip.generateAsync({ type: 'blob' });
+        const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 4 } });
         saveAs(content, `certificates-${exportFormat}.zip`);
     }
+
+    if (onProgress) onProgress(100);
 }

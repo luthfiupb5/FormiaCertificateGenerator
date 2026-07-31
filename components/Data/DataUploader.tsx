@@ -79,11 +79,11 @@ export default function DataUploader({ onDataLoaded, onClose }: DataUploaderProp
     });
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-lg glass-panel bg-[#1a1a1a] rounded-2xl p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 border border-white/10 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 border border-slate-200 relative">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors"
+                    className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -93,8 +93,8 @@ export default function DataUploader({ onDataLoaded, onClose }: DataUploaderProp
                         <FileSpreadsheet className="w-6 h-6" />
                     </div>
                     <div className="text-center">
-                        <h2 className="text-lg font-bold text-white">Upload Data</h2>
-                        <p className="text-sm text-neutral-400">Import CSV or Excel to auto-fill certificates</p>
+                        <h2 className="text-lg font-bold text-slate-900">Upload Your Data</h2>
+                        <p className="text-sm text-slate-500">Import CSV or Excel to auto-fill certificates</p>
                     </div>
                 </div>
 
@@ -102,7 +102,7 @@ export default function DataUploader({ onDataLoaded, onClose }: DataUploaderProp
                     {...getRootProps()}
                     className={clsx(
                         "border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-4 transition-all duration-300 cursor-pointer",
-                        isDragActive ? "border-green-500 bg-green-500/10" : "border-white/10 hover:border-white/20 hover:bg-white/5",
+                        isDragActive ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
                         error ? "border-red-500/50" : ""
                     )}
                 >
@@ -110,14 +110,14 @@ export default function DataUploader({ onDataLoaded, onClose }: DataUploaderProp
                     {isProcessing ? (
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-sm text-neutral-400">Parsing file...</p>
+                            <p className="text-sm text-slate-600">Parsing file...</p>
                         </div>
                     ) : (
                         <>
-                            <Upload className="w-8 h-8 text-neutral-500" />
+                            <Upload className="w-8 h-8 text-slate-500" />
                             <div className="text-center">
-                                <p className="font-medium text-neutral-300">Click to upload or drag and drop</p>
-                                <p className="text-xs text-neutral-500 mt-1">CSV, XLSX, XLS</p>
+                                <p className="font-semibold text-slate-700">Click to upload or drag and drop</p>
+                                <p className="text-xs text-slate-400 mt-1">CSV, XLSX, XLS supported</p>
                             </div>
                         </>
                     )}

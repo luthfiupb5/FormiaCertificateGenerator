@@ -4,30 +4,30 @@
 
 @layer base {
   :root {
-    --background: #000000;
-    --foreground: #ffffff;
+    --background: #f8fafc;
+    --foreground: #0f172a;
 
-    --card: #0a0a0a;
-    --card-foreground: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
 
-    --primary: #8b5cf6;
-    /* Violet 500 */
+    --primary: #6366f1;
+    /* Indigo 500 */
     --primary-foreground: #ffffff;
 
-    --secondary: #27272a;
-    /* Zinc 800 */
-    --secondary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    /* Slate 100 */
+    --secondary-foreground: #0f172a;
 
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
 
     --accent: #10b981;
     /* Emerald 500 */
     --accent-foreground: #ffffff;
 
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #8b5cf6;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #6366f1;
 
     --radius: 0.75rem;
   }
@@ -49,23 +49,26 @@
   }
 
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+    @apply bg-white/70 backdrop-blur-xl border border-black/10 shadow-sm;
+  }
+  
+  /* Pristine Apple Glass */
+  .apple-glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 4px 24px -4px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 
   .hover-lift {
     @apply transition-transform duration-300 hover:-translate-y-1;
-  }
-
-  .btn {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-full font-medium transition-all duration-300;
-  }
-
-  .btn-primary {
-    @apply bg-white text-black hover:scale-105 hover:bg-neutral-200;
-  }
-
-  .btn-outline {
-    @apply border border-white/20 hover:bg-white/10 hover:border-white/50;
   }
 
   .perspective-1000 {

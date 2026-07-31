@@ -24,8 +24,8 @@ module.exports = {
                 DEFAULT: 'var(--radius)',
             },
             fontFamily: {
-                sans: ['var(--font-jakarta)', 'var(--font-inter)', 'sans-serif'],
-                heading: ['var(--font-space)', 'sans-serif'],
+                sans: ['var(--font-satoshi)', 'sans-serif'],
+                heading: ['var(--font-satoshi)', 'sans-serif'],
             },
             backgroundImage: {
                 'dot-pattern': 'radial-gradient(circle, #27272a 1px, transparent 1px)',
